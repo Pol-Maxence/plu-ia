@@ -3,3 +3,5 @@ anthropic
 python-dotenv
 reportlab
 shapely
+pdfminer.six
+pytest

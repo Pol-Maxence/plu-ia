@@ -22,4 +22,5 @@ class Parcelle:
 class ZonePLU:
     zone: str                # ex: "UA", "UB", "N", "A"
     libelle: str             # libellé complet de la zone
-    partition: str           # identifiant commune pour le Géoportail (ex: "75056")
+    partition: str           # identifiant du document GPU (ex: "DU_75056")
+    nomfic: str = ""         # nom du fichier PDF règlement (ex: "75056_reglement_20230101.pdf")

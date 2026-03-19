@@ -58,22 +58,28 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
 
     # --- Étape 2 : zonage PLU ---
     logger.info("Récupération zonage PLU...")
-    # Coordonnées depuis le centroïde de la géométrie (Point ou Polygon)
+    # Centroïde approximatif selon le type GeoJSON retourné par l'API IGN
     geom = parcelle.geometrie
     if geom["type"] == "Point":
         lon, lat = geom["coordinates"]
-    else:
-        # Centroïde approximatif pour les polygones
+    elif geom["type"] == "Polygon":
         coords = geom["coordinates"][0]
         lon = sum(c[0] for c in coords) / len(coords)
         lat = sum(c[1] for c in coords) / len(coords)
+    elif geom["type"] == "MultiPolygon":
+        # Prendre le premier anneau du premier polygone
+        coords = geom["coordinates"][0][0]
+        lon = sum(c[0] for c in coords) / len(coords)
+        lat = sum(c[1] for c in coords) / len(coords)
+    else:
+        raise ValueError(f"Type de géométrie non supporté : {geom['type']}")
 
     zonage = get_zonage_plu(lat=lat, lon=lon)
     logger.info("Zone PLU : %s (%s)", zonage.zone, zonage.libelle)
 
     # --- Étape 3 : texte du règlement PLU ---
     logger.info("Téléchargement règlement PLU (partition : %s)...", zonage.partition)
-    texte_plu = get_reglement_plu_text(zonage.partition)
+    texte_plu = get_reglement_plu_text(zonage.partition, zonage.nomfic)
     texte_zone = extraire_section_zone(texte_plu, zonage.zone)
     logger.info("Texte PLU extrait : %d caractères", len(texte_zone))
 

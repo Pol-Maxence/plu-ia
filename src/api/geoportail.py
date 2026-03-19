@@ -6,6 +6,7 @@ Responsabilités :
 - Récupérer le texte du règlement PLU depuis le Géoportail de l'Urbanisme
 """
 
+import json
 import logging
 import re
 import requests
@@ -23,10 +24,11 @@ def get_zonage_plu(lat: float, lon: float) -> ZonePLU:
     Utilise apicarto.ign.fr/api/gpu/zone-urba.
     """
     try:
+        geom = json.dumps({"type": "Point", "coordinates": [lon, lat]})
         r = requests.get(
             f"{_BASE_GPU}/zone-urba",
-            params={"lon": lon, "lat": lat},
-            timeout=10,
+            params={"geom": geom},
+            timeout=15,
         )
         r.raise_for_status()
         features = r.json().get("features", [])
@@ -42,6 +44,7 @@ def get_zonage_plu(lat: float, lon: float) -> ZonePLU:
             zone=props.get("libelle", ""),
             libelle=props.get("libelong", props.get("libelle", "")),
             partition=partition,
+            nomfic=props.get("nomfic", ""),
         )
     except Exception as e:
         logger.error("Erreur récupération zonage PLU (%s, %s) : %s", lat, lon, e)
@@ -66,22 +69,36 @@ def get_documents_urba(code_insee: str) -> list[dict]:
         raise
 
 
-def get_reglement_plu_text(partition: str) -> str:
+def get_reglement_plu_text(partition: str, nomfic: str) -> str:
     """
-    Récupère le texte brut du règlement PLU depuis le Géoportail de l'Urbanisme.
-    partition = identifiant du document (ex: "75056_PLU_20230101")
+    Télécharge le PDF du règlement PLU et en extrait le texte.
 
-    Retourne le contenu textuel du règlement (peut être long — plusieurs Mo).
-    En cas d'échec, retourne une chaîne vide et logue l'erreur.
+    Args:
+        partition : identifiant GPU du document (ex: "DU_75056")
+        nomfic    : nom du fichier PDF (ex: "75056_reglement_20230101.pdf")
+
+    Retourne le texte extrait du PDF, ou une chaîne vide en cas d'échec.
     """
+    import io
     try:
-        url = f"{_BASE_GPU_DOC}/{partition}/download"
-        r = requests.get(url, timeout=30)
+        from pdfminer.high_level import extract_text_to_fp
+        from pdfminer.layout import LAParams
+    except ImportError:
+        logger.error("pdfminer.six non installé — pip install pdfminer.six")
+        return ""
+
+    url = f"https://piece-ecrite.geoportail-urbanisme.gouv.fr/{partition}/{nomfic}"
+    try:
+        r = requests.get(url, timeout=60)
         r.raise_for_status()
-        return r.text
+
+        output = io.StringIO()
+        extract_text_to_fp(io.BytesIO(r.content), output, laparams=LAParams())
+        texte = output.getvalue()
+        logger.info("PLU téléchargé : %d caractères extraits (%s)", len(texte), nomfic)
+        return texte
     except Exception as e:
-        logger.error("Erreur récupération règlement PLU %r : %s", partition, e)
-        # Retourne vide plutôt que de bloquer tout le pipeline
+        logger.error("Erreur récupération règlement PLU %r/%r : %s", partition, nomfic, e)
         return ""
 
 

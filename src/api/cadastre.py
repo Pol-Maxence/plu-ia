@@ -39,6 +39,17 @@ def geocoder_adresse(adresse: str) -> tuple[float, float]:
         raise
 
 
+def _props_to_parcelle(props: dict, geometrie: dict) -> Parcelle:
+    """Convertit les properties IGN en objet Parcelle."""
+    return Parcelle(
+        ref_cadastrale=props.get("idu", props.get("numero", "")),
+        surface_m2=float(props.get("contenance", 0)),
+        commune=props.get("nom_com", ""),
+        code_insee=props.get("code_insee", props.get("code_dep", "") + props.get("code_com", "")),
+        geometrie=geometrie,
+    )
+
+
 def get_parcelle_by_coords(lon: float, lat: float) -> Parcelle:
     """
     Récupère les données cadastrales de la parcelle à partir de coordonnées GPS.
@@ -55,15 +66,7 @@ def get_parcelle_by_coords(lon: float, lat: float) -> Parcelle:
         if not features:
             raise ValueError(f"Aucune parcelle trouvée aux coordonnées ({lat}, {lon})")
         data = features[0]
-        props = data["properties"]
-        code_insee = props.get("code_dep", "") + props.get("code_com", "")
-        return Parcelle(
-            ref_cadastrale=props.get("numero", ""),
-            surface_m2=float(props.get("contenance", 0)),
-            commune=props.get("nom_com", ""),
-            code_insee=code_insee,
-            geometrie=data["geometry"],
-        )
+        return _props_to_parcelle(data["properties"], data["geometry"])
     except Exception as e:
         logger.error("Erreur récupération parcelle (%s, %s) : %s", lat, lon, e)
         raise
@@ -78,15 +81,32 @@ def get_parcelle_by_address(adresse: str) -> Parcelle:
     return get_parcelle_by_coords(lon, lat)
 
 
+def _parser_ref_cadastrale(ref: str) -> dict:
+    """
+    Décompose une référence cadastrale au format IDU (14 caractères).
+    ex: "75056000BX0042" → code_insee=75056, section=BX, numero=0042
+
+    Format : [code_insee 5][com_abs 3][section 2][numero 4]
+    """
+    if len(ref) != 14:
+        raise ValueError(f"Référence cadastrale invalide (doit faire 14 caractères) : {ref!r}")
+    return {
+        "code_insee": ref[0:5],
+        "section": ref[8:10],
+        "numero": ref[10:14],
+    }
+
+
 def get_parcelle_by_ref(ref_cadastrale: str) -> Parcelle:
     """
-    Récupère une parcelle directement depuis sa référence cadastrale.
+    Récupère une parcelle directement depuis sa référence cadastrale IDU.
     ex: "75056000BX0042"
     """
     try:
+        params = _parser_ref_cadastrale(ref_cadastrale)
         r = requests.get(
             "https://apicarto.ign.fr/api/cadastre/parcelle",
-            params={"numero": ref_cadastrale},
+            params=params,
             timeout=10,
         )
         r.raise_for_status()
@@ -94,15 +114,7 @@ def get_parcelle_by_ref(ref_cadastrale: str) -> Parcelle:
         if not features:
             raise ValueError(f"Parcelle introuvable : {ref_cadastrale!r}")
         data = features[0]
-        props = data["properties"]
-        code_insee = props.get("code_dep", "") + props.get("code_com", "")
-        return Parcelle(
-            ref_cadastrale=ref_cadastrale,
-            surface_m2=float(props.get("contenance", 0)),
-            commune=props.get("nom_com", ""),
-            code_insee=code_insee,
-            geometrie=data["geometry"],
-        )
+        return _props_to_parcelle(data["properties"], data["geometry"])
     except Exception as e:
         logger.error("Erreur récupération parcelle %r : %s", ref_cadastrale, e)
         raise
