@@ -46,6 +46,9 @@ def calculer_capacite(parcelle: Parcelle, regles: ReglesUrbanisme) -> EtudeCapac
     # --- Emprise au sol ---
     if regles.emprise_sol_max_pct is not None:
         emprise_pct = regles.emprise_sol_max_pct
+    elif regles.emprise_non_reglementee:
+        emprise_pct = 100.0
+        hypotheses.append("Emprise au sol non réglementée dans le PLU — 100% appliqué (occupation maximale théorique)")
     else:
         emprise_pct = _EMPRISE_MAX_DEFAUT_PCT
         hypotheses.append(
@@ -73,7 +76,7 @@ def calculer_capacite(parcelle: Parcelle, regles: ReglesUrbanisme) -> EtudeCapac
         sp_max_m2 = emprise_max_m2 * nb_niveaux
 
     # Alerte zone non constructible
-    if regles.zone.startswith("N") or regles.zone.startswith("A"):
+    if regles.zone and (regles.zone.startswith("N") or regles.zone.startswith("A")):
         alertes.append(
             f"Zone {regles.zone} : constructibilité très limitée voire nulle — "
             "vérifier les dispositions spécifiques avant tout projet"

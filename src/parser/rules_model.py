@@ -22,3 +22,4 @@ class ReglesUrbanisme:
     contraintes: list[str] = field(default_factory=list)   # alertes réglementaires
     recul_voirie_m: Optional[float] = None       # recul par rapport à la voirie
     recul_limites_m: Optional[float] = None      # recul par rapport aux limites séparatives
+    emprise_non_reglementee: bool = False        # True si le PLU indique explicitement "non réglementée"

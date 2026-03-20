@@ -16,6 +16,7 @@ class Parcelle:
     commune: str
     code_insee: str          # ex: "75116" (code dept + code commune)
     geometrie: dict          # GeoJSON geometry (Point ou Polygon)
+    adresse: str = ""        # adresse postale saisie par l'utilisateur (si connue)
 
 
 @dataclass

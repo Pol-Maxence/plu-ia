@@ -53,12 +53,14 @@ def _props_to_parcelle(props: dict, geometrie: dict) -> Parcelle:
 def get_parcelle_by_coords(lon: float, lat: float) -> Parcelle:
     """
     Récupère les données cadastrales de la parcelle à partir de coordonnées GPS.
-    Utilise apicarto.ign.fr/api/cadastre/parcelle.
+    Utilise apicarto.ign.fr/api/cadastre/parcelle avec filtrage géométrique.
     """
+    import json as _json
     try:
+        geom = _json.dumps({"type": "Point", "coordinates": [lon, lat]})
         r = requests.get(
             "https://apicarto.ign.fr/api/cadastre/parcelle",
-            params={"lon": lon, "lat": lat},
+            params={"geom": geom},
             timeout=10,
         )
         r.raise_for_status()
@@ -78,7 +80,9 @@ def get_parcelle_by_address(adresse: str) -> Parcelle:
     Enchaîne le géocodage et la récupération cadastrale.
     """
     lon, lat = geocoder_adresse(adresse)
-    return get_parcelle_by_coords(lon, lat)
+    parcelle = get_parcelle_by_coords(lon, lat)
+    parcelle.adresse = adresse
+    return parcelle
 
 
 def _parser_ref_cadastrale(ref: str) -> dict:

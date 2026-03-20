@@ -10,7 +10,6 @@ Responsabilités :
 import json
 import logging
 import re
-from typing import Optional
 
 import anthropic
 
@@ -33,6 +32,7 @@ Réponds UNIQUEMENT avec un JSON valide respectant exactement ce schéma :
 {{
   "zone": "string — code de zone (ex: UA)",
   "emprise_sol_max_pct": float ou null — pourcentage emprise au sol max (ex: 60.0),
+  "emprise_non_reglementee": bool — true si le texte dit explicitement "non réglementée" pour l'emprise,
   "hauteur_max_m": float ou null — hauteur maximale en mètres,
   "surface_plancher_max_m2": float ou null — surface de plancher maximale si COS défini,
   "usages_autorises": ["string", ...] — liste des usages autorisés,
@@ -43,11 +43,16 @@ Réponds UNIQUEMENT avec un JSON valide respectant exactement ce schéma :
 }}
 
 Exemples few-shot :
-- "emprise au sol ne peut excéder 40% de la superficie du terrain" → emprise_sol_max_pct: 40.0
+- "emprise au sol ne peut excéder 40% de la superficie du terrain" → emprise_sol_max_pct: 40.0, emprise_non_reglementee: false
+- "Emprise au sol des constructions / Non réglementé." → emprise_sol_max_pct: null, emprise_non_reglementee: true
 - "hauteur maximale des constructions : 12 mètres" → hauteur_max_m: 12.0
+- "La hauteur des constructions est limitée à 9 mètres à l'égout du toit" → hauteur_max_m: 9.0
+- "hauteur maximale : R+2 (9 m)" → hauteur_max_m: 9.0
 - "les constructions à usage d'habitation sont autorisées" → usages_autorises: ["habitation"]
 - "tout dépôt de matériaux est interdit" → usages_interdits: ["dépôt de matériaux"]
 - "secteur classé monument historique" → contraintes: ["classement monument historique"]
+
+Note : certains PLUi utilisent un format tableau avec des titres libres ("Emprise au sol", "Hauteur maximale") suivis de leur valeur. Lis attentivement le contexte autour de ces titres pour extraire les valeurs numériques.
 
 Si une valeur est absente du texte, mettre null (pas 0, pas de valeur inventée)."""
 
@@ -102,12 +107,15 @@ def extraire_regles_plu(
         logger.error("Erreur appel LLM pour zone %r : %s", zone, e)
         raise
 
-    # Valeurs par défaut pour les champs liste si absents
+    # Valeurs par défaut pour les champs si absents
+    if not data.get("zone"):
+        data["zone"] = zone
     data.setdefault("usages_autorises", [])
     data.setdefault("usages_interdits", [])
     data.setdefault("contraintes", [])
     data.setdefault("recul_voirie_m", None)
     data.setdefault("recul_limites_m", None)
+    data.setdefault("emprise_non_reglementee", False)
 
     return ReglesUrbanisme(**data)
 
