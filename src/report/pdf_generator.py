@@ -20,8 +20,7 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
     HRFlowable, Image, KeepTogether
 )
-from reportlab.graphics.shapes import Drawing, Rect, Line, String, Group
-from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing, Rect, Line, String
 
 from src.api.models import Parcelle
 from src.parser.rules_model import ReglesUrbanisme
@@ -86,37 +85,145 @@ def _styles() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Carte de localisation (tuiles IGN)
+# Carte de localisation (tuiles IGN + contour parcelle)
 # ---------------------------------------------------------------------------
 
-def _carte_localisation(lon: float, lat: float, zoom: int = 18, size: int = 400) -> Image | None:
-    """
-    Télécharge une image de carte centrée sur la parcelle via l'API tuilée IGN.
-    Retourne un objet Image ReportLab, ou None si le téléchargement échoue.
-    """
-    # Calcul tile OSM/IGN (slippy map)
+def _lon_lat_to_tile(lon: float, lat: float, zoom: int) -> tuple[int, int]:
+    """Convertit lon/lat en coordonnées de tuile (x, y) slippy map."""
     import math
     n = 2 ** zoom
-    xtile = int((lon + 180) / 360 * n)
-    ytile = int((1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n)
+    x = int((lon + 180) / 360 * n)
+    y = int((1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n)
+    return x, y
 
+
+def _lon_lat_to_pixel(lon: float, lat: float, zoom: int, x0_tile: int, y0_tile: int) -> tuple[int, int]:
+    """Convertit lon/lat en pixel dans l'image assemblée (origine = coin haut-gauche de la tuile x0,y0)."""
+    import math
+    n = 2 ** zoom
+    px = (lon + 180) / 360 * n * 256 - x0_tile * 256
+    py = (1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n * 256 - y0_tile * 256
+    return int(px), int(py)
+
+
+def _get_tile(zoom: int, x: int, y: int, layer: str = "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"):
+    """Télécharge une tuile IGN et retourne une image PIL."""
+    from PIL import Image as PILImage
     url = (
-        f"https://wxs.ign.fr/essentiels/geoportail/wmts"
+        f"https://data.geopf.fr/wmts"
         f"?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
-        f"&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"
+        f"&LAYER={layer}"
         f"&STYLE=normal&TILEMATRIXSET=PM"
-        f"&TILEMATRIX={zoom}&TILEROW={ytile}&TILECOL={xtile}"
+        f"&TILEMATRIX={zoom}&TILEROW={y}&TILECOL={x}"
         f"&FORMAT=image%2Fpng"
     )
     try:
         r = requests.get(url, timeout=10)
         r.raise_for_status()
-        img_data = io.BytesIO(r.content)
-        img = Image(img_data, width=8 * cm, height=8 * cm)
-        return img
-    except Exception as e:
-        logger.warning("Carte IGN non disponible : %s", e)
+        return PILImage.open(io.BytesIO(r.content)).convert("RGBA")
+    except Exception:
         return None
+
+
+def _extraire_rings(geometrie: dict) -> list:
+    """Extrait tous les anneaux de coordonnées d'une géométrie GeoJSON."""
+    if geometrie["type"] == "Polygon":
+        return geometrie["coordinates"]
+    elif geometrie["type"] == "MultiPolygon":
+        return [ring for poly in geometrie["coordinates"] for ring in poly]
+    elif geometrie["type"] == "Point":
+        lon, lat = geometrie["coordinates"]
+        return [[[lon, lat]]]
+    return []
+
+
+def _carte_localisation(geometries: "list[dict] | dict", zoom: int = 18) -> Image | None:
+    """
+    Génère une carte IGN avec le contour de la/des parcelle(s) dessiné en rouge.
+    Accepte une seule géométrie GeoJSON ou une liste pour le mode multi-parcelles.
+    """
+    from PIL import Image as PILImage, ImageDraw
+
+    if isinstance(geometries, dict):
+        geometries = [geometries]
+
+    # Extraire tous les anneaux de toutes les géométries
+    all_rings_by_geom = [_extraire_rings(g) for g in geometries]
+    all_rings = [ring for rings in all_rings_by_geom for ring in rings]
+    if not all_rings:
+        return None
+
+    all_coords = [pt for ring in all_rings for pt in ring]
+    lons = [c[0] for c in all_coords]
+    lats = [c[1] for c in all_coords]
+
+    # Bounding box + marge de 20%
+    lon_min, lon_max = min(lons), max(lons)
+    lat_min, lat_max = min(lats), max(lats)
+    marge_lon = max((lon_max - lon_min) * 0.3, 0.0003)
+    marge_lat = max((lat_max - lat_min) * 0.3, 0.0003)
+    lon_min -= marge_lon; lon_max += marge_lon
+    lat_min -= marge_lat; lat_max += marge_lat
+
+    # Tuiles couvrant la bounding box
+    x_min, y_max = _lon_lat_to_tile(lon_min, lat_min, zoom)  # lat_min → y_max (y inversé)
+    x_max, y_min = _lon_lat_to_tile(lon_max, lat_max, zoom)
+
+    # Limiter à une grille 3×3 max pour éviter trop de requêtes
+    if (x_max - x_min + 1) * (y_max - y_min + 1) > 9:
+        zoom = max(15, zoom - 1)
+        x_min, y_max = _lon_lat_to_tile(lon_min, lat_min, zoom)
+        x_max, y_min = _lon_lat_to_tile(lon_max, lat_max, zoom)
+
+    cols = x_max - x_min + 1
+    rows = y_max - y_min + 1
+    size = (cols * 256, rows * 256)
+    canvas = PILImage.new("RGBA", size, (200, 200, 200, 255))
+
+    # Couche 1 : fond topo IGN
+    for xi, tx in enumerate(range(x_min, x_max + 1)):
+        for yi, ty in enumerate(range(y_min, y_max + 1)):
+            tile = _get_tile(zoom, tx, ty, "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2")
+            if tile:
+                canvas.paste(tile, (xi * 256, yi * 256))
+
+    # Couche 2 : parcelles cadastrales (délimitations + numéros), opacité 85%
+    cadastre_layer = PILImage.new("RGBA", size, (0, 0, 0, 0))
+    for xi, tx in enumerate(range(x_min, x_max + 1)):
+        for yi, ty in enumerate(range(y_min, y_max + 1)):
+            tile = _get_tile(zoom, tx, ty, "CADASTRALPARCELS.PARCELLAIRE_EXPRESS")
+            if tile:
+                cadastre_layer.paste(tile, (xi * 256, yi * 256))
+    # Ajuster l'opacité de la couche cadastrale
+    r2, g2, b2, a2 = cadastre_layer.split()
+    a2 = a2.point(lambda p: int(p * 0.85))
+    cadastre_layer = PILImage.merge("RGBA", (r2, g2, b2, a2))
+    canvas = PILImage.alpha_composite(canvas, cadastre_layer)
+
+    # Couche 3 : contour de la/des parcelle(s) analysée(s) (rouge semi-transparent)
+    overlay = PILImage.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    for ring in all_rings:
+        pixels = [_lon_lat_to_pixel(c[0], c[1], zoom, x_min, y_min) for c in ring]
+        if len(pixels) >= 2:
+            draw.polygon(pixels, fill=(220, 38, 38, 60))
+            draw.line(pixels + [pixels[0]], fill=(220, 38, 38, 230), width=4)
+    canvas = PILImage.alpha_composite(canvas, overlay)
+    canvas = canvas.convert("RGB")
+
+    # Recadrer sur la bounding box utile avec marges
+    px_min, py_max = _lon_lat_to_pixel(lon_min, lat_min, zoom, x_min, y_min)
+    px_max, py_min = _lon_lat_to_pixel(lon_max, lat_max, zoom, x_min, y_min)
+    px_min = max(0, px_min); py_min = max(0, py_min)
+    px_max = min(canvas.width, px_max); py_max = min(canvas.height, py_max)
+    if px_max > px_min and py_max > py_min:
+        canvas = canvas.crop((px_min, py_min, px_max, py_max))
+
+    # Conversion en image ReportLab
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    buf.seek(0)
+    return Image(buf, width=9 * cm, height=9 * cm)
 
 
 # ---------------------------------------------------------------------------
@@ -234,13 +341,13 @@ def _tableau_synthese(etude: EtudeCapacitaire, parcelle: Parcelle, regles: Regle
 
     data = [[
         Paragraph(
-            f"<b><font size=16 color='#10B981'>{etude.emprise_sol_max_m2:,.0f} m²</font></b><br/>"
+            f"<b><font size=16 color='#10B981'>{etude.emprise_sol_max_m2:.0f} m²</font></b><br/>"
             f"<font size=8 color='#64748B'>Emprise au sol max</font><br/>"
             f"<font size=8 color='#64748B'>({regles.emprise_sol_max_pct or 60:.0f}% de {parcelle.surface_m2:.0f} m²)</font>",
             _styles()["body"]
         ),
         Paragraph(
-            f"<b><font size=16 color='#2563EB'>{etude.surface_plancher_max_m2:,.0f} m²</font></b><br/>"
+            f"<b><font size=16 color='#2563EB'>{etude.surface_plancher_max_m2:.0f} m²</font></b><br/>"
             f"<font size=8 color='#64748B'>Surface de plancher max</font>",
             _styles()["body"]
         ),
@@ -307,9 +414,11 @@ def generer_rapport(
     regles: ReglesUrbanisme,
     etude: EtudeCapacitaire,
     output: str = "rapport.pdf",
+    all_parcelles: "list[Parcelle] | None" = None,
 ) -> None:
     """
     Génère le rapport PDF complet d'étude capacitaire.
+    all_parcelles : liste des parcelles individuelles (mode multi-parcelles).
     """
     doc = SimpleDocTemplate(
         output,
@@ -329,19 +438,30 @@ def generer_rapport(
     story.append(HRFlowable(width="100%", thickness=2, color=_BLEU_CLAIR, spaceAfter=10))
 
     # --- Bloc carte + infos parcelle côte à côte ---
-    # Coordonnées depuis la géométrie
-    geom = parcelle.geometrie
-    lon, lat = _centroide(geom)
-    carte = _carte_localisation(lon, lat)
+    geometries = [p.geometrie for p in all_parcelles] if all_parcelles else parcelle.geometrie
+    carte = _carte_localisation(geometries)
 
-    info_rows = [
-        ["Référence cadastrale", parcelle.ref_cadastrale],
-        ["Commune",              parcelle.commune],
-        ["Code INSEE",           parcelle.code_insee],
-        ["Surface parcelle",     f"{parcelle.surface_m2:,.0f} m²"],
-        ["Zone PLU",             regles.zone],
-        ["Date du rapport",      date.today().strftime("%d/%m/%Y")],
-    ]
+    if all_parcelles and len(all_parcelles) > 1:
+        refs_txt = "\n".join(p.ref_cadastrale for p in all_parcelles)
+        info_rows = [
+            ["Références cadastrales", refs_txt],
+            ["Commune",               parcelle.commune],
+            ["Code INSEE",            parcelle.code_insee],
+            ["Surface totale",        f"{parcelle.surface_m2:.0f} m²"],
+            ["Zone PLU",              regles.zone],
+            ["Date du rapport",       date.today().strftime("%d/%m/%Y")],
+        ]
+    else:
+        info_rows = [
+            ["Référence cadastrale", parcelle.ref_cadastrale],
+            ["Commune",              parcelle.commune],
+            ["Code INSEE",           parcelle.code_insee],
+            ["Surface parcelle",     f"{parcelle.surface_m2:.0f} m²"],
+            ["Zone PLU",             regles.zone],
+            ["Date du rapport",      date.today().strftime("%d/%m/%Y")],
+        ]
+        if parcelle.adresse:
+            info_rows.insert(0, ["Adresse analysée", parcelle.adresse])
     t_info = Table(info_rows, colWidths=[4 * cm, 4.5 * cm])
     t_info.setStyle(_table_style())
 
@@ -374,6 +494,8 @@ def generer_rapport(
     story.append(Spacer(1, 0.3 * cm))
 
     # --- Règles PLU détaillées ---
+    from reportlab.platypus import PageBreak
+    story.append(PageBreak())
     story.append(Paragraph("Règles PLU applicables", s["h2"]))
     regles_rows = [["Paramètre", "Valeur PLU"]]
     regles_rows.append(["Emprise au sol max",
@@ -431,18 +553,3 @@ def generer_rapport(
     except Exception as e:
         logger.error("Erreur génération PDF : %s", e)
         raise
-
-
-def _centroide(geom: dict) -> tuple[float, float]:
-    """Retourne (lon, lat) du centroïde approximatif d'une géométrie GeoJSON."""
-    if geom["type"] == "Point":
-        return geom["coordinates"]
-    elif geom["type"] == "Polygon":
-        coords = geom["coordinates"][0]
-    elif geom["type"] == "MultiPolygon":
-        coords = geom["coordinates"][0][0]
-    else:
-        return 2.3522, 48.8566   # Paris par défaut
-    lon = sum(c[0] for c in coords) / len(coords)
-    lat = sum(c[1] for c in coords) / len(coords)
-    return lon, lat
