@@ -23,3 +23,5 @@ class ReglesUrbanisme:
     recul_voirie_m: Optional[float] = None       # recul par rapport à la voirie
     recul_limites_m: Optional[float] = None      # recul par rapport aux limites séparatives
     emprise_non_reglementee: bool = False        # True si le PLU indique explicitement "non réglementée"
+    stationnement_par_logt: Optional[float] = None  # places de stationnement par logement (ex: 1.0)
+    espace_vert_min_pct: Optional[float] = None     # % minimum du terrain en espace vert

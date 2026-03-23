@@ -5,6 +5,7 @@ Lancement :
     streamlit run app.py
 """
 
+import os
 import tempfile
 
 import folium
@@ -13,6 +14,13 @@ from dotenv import load_dotenv
 from streamlit_folium import st_folium
 
 load_dotenv()
+
+# Sur Streamlit Cloud, les secrets sont dans st.secrets (pas dans .env)
+if "ANTHROPIC_API_KEY" not in os.environ:
+    try:
+        os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+    except Exception:
+        pass
 
 # ---------------------------------------------------------------------------
 # Constantes cartographiques
@@ -50,6 +58,14 @@ defaults = {
     "last_click": None,
     "skip_next_click": False,
     "map_version": 0,  # incrémenté à chaque déplacement programmatique de la carte
+    # Paramètres de calcul éditables
+    "param_stat": 1.0,   # places stationnement par logement
+    "param_ev": 20.0,    # % espaces verts minimum
+    "param_rv": 0.0,     # recul voirie (m)
+    "param_rl": 3.0,     # recul limites séparatives (m)
+    "param_t3": 65.0,    # surface T3 (m²)
+    "param_t2": 50.0,    # surface T2 (m²)
+    "param_rh": 75,      # ratio habitable (%)
 }
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -216,6 +232,44 @@ with col_panel:
 
     st.divider()
 
+    # --- Paramètres de calcul éditables ---
+    with st.expander("Paramètres de calcul", expanded=False):
+        st.caption("Valeurs issues du PLU ou appliquées par défaut. Modifiez avant l'analyse.")
+        _stat = st.number_input("Stationnement (pl./logt)", value=float(st.session_state.param_stat),
+                                step=0.5, min_value=0.0, key="input_stat")
+        _ev = st.number_input("Espaces verts min (%)", value=float(st.session_state.param_ev),
+                              step=5.0, min_value=0.0, max_value=80.0, key="input_ev")
+        _rv = st.number_input("Recul voirie (m)", value=float(st.session_state.param_rv),
+                              step=1.0, min_value=0.0, key="input_rv")
+        _rl = st.number_input("Recul limites (m)", value=float(st.session_state.param_rl),
+                              step=1.0, min_value=0.0, key="input_rl")
+        _t3 = st.number_input("Surface logt min (m², T3)", value=float(st.session_state.param_t3),
+                              step=5.0, min_value=20.0, key="input_t3")
+        _t2 = st.number_input("Surface logt max (m², T2)", value=float(st.session_state.param_t2),
+                              step=5.0, min_value=15.0, key="input_t2")
+        _rh = st.slider("Ratio habitable (%)", value=int(st.session_state.param_rh),
+                        min_value=60, max_value=90, key="input_rh")
+        # Sauvegarder dans session_state
+        st.session_state.param_stat = _stat
+        st.session_state.param_ev = _ev
+        st.session_state.param_rv = _rv
+        st.session_state.param_rl = _rl
+        st.session_state.param_t3 = _t3
+        st.session_state.param_t2 = _t2
+        st.session_state.param_rh = _rh
+
+    _params_calcul = {
+        "stationnement_par_logt": st.session_state.param_stat,
+        "espace_vert_min_pct": st.session_state.param_ev,
+        "recul_voirie_m": st.session_state.param_rv,
+        "recul_limites_m": st.session_state.param_rl,
+        "surface_t3_m2": st.session_state.param_t3,
+        "surface_t2_m2": st.session_state.param_t2,
+        "ratio_habitable": st.session_state.param_rh / 100,
+    }
+
+    st.divider()
+
     # --- Bouton Analyser ---
     has_selection = bool(st.session_state.selected_parcelles)
     if st.button(
@@ -239,7 +293,7 @@ with col_panel:
                     st.write("Analyse PLU par IA…")
                     st.write("Calcul capacitaire…")
                     st.write("Génération du rapport PDF…")
-                    run_multi(refs=refs, output=tmp_path)
+                    run_multi(refs=refs, output=tmp_path, params=_params_calcul)
                     safe_label = "+".join(refs)
                 else:
                     from src.main import run
@@ -249,7 +303,7 @@ with col_panel:
                     st.write("Analyse PLU par IA…")
                     st.write("Calcul capacitaire…")
                     st.write("Génération du rapport PDF…")
-                    run(ref_cadastrale=p.ref_cadastrale, output=tmp_path)
+                    run(ref_cadastrale=p.ref_cadastrale, output=tmp_path, params=_params_calcul)
                     safe_label = p.ref_cadastrale
 
                 status.update(label="Analyse terminée ✓", state="complete")

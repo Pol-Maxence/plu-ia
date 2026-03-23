@@ -3,7 +3,7 @@ anthropic
 python-dotenv
 reportlab
 shapely
-pdfminer.six
+pymupdf
 pytest
 streamlit
 streamlit-folium>=0.22

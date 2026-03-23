@@ -339,11 +339,18 @@ def _tableau_synthese(etude: EtudeCapacitaire, parcelle: Parcelle, regles: Regle
     teal_bg  = colors.HexColor("#CCFBF1")
     orange_bg = colors.HexColor("#FFEDD5")
 
+    if regles.emprise_non_reglementee:
+        _label_emprise = f"Non réglementée · 80% appliqué"
+    elif regles.emprise_sol_max_pct:
+        _label_emprise = f"{regles.emprise_sol_max_pct:.0f}% de {parcelle.surface_m2:.0f} m²"
+    else:
+        _label_emprise = f"60% de {parcelle.surface_m2:.0f} m² (défaut)"
+
     data = [[
         Paragraph(
             f"<b><font size=16 color='#10B981'>{etude.emprise_sol_max_m2:.0f} m²</font></b><br/>"
             f"<font size=8 color='#64748B'>Emprise au sol max</font><br/>"
-            f"<font size=8 color='#64748B'>({regles.emprise_sol_max_pct or 60:.0f}% de {parcelle.surface_m2:.0f} m²)</font>",
+            f"<font size=8 color='#64748B'>({_label_emprise})</font>",
             _styles()["body"]
         ),
         Paragraph(
@@ -403,6 +410,51 @@ def _table_style() -> TableStyle:
         ("TOPPADDING",   (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING",(0, 0), (-1, -1), 5),
     ])
+
+
+# ---------------------------------------------------------------------------
+# Section déductions appliquées
+# ---------------------------------------------------------------------------
+
+def _section_deductions(etude: EtudeCapacitaire, s: dict) -> Table:
+    """
+    Tableau récapitulatif des déductions appliquées sur l'emprise brute PLU.
+    Affiché uniquement si au moins une déduction est non nulle.
+    """
+    rows = [["Déductions sur l'emprise constructible", ""]]
+    rows.append(["Emprise brute PLU", f"{etude.emprise_brute_m2:.0f} m²"])
+    if etude.emprise_apres_reculs_m2 < etude.emprise_brute_m2:
+        delta_reculs = etude.emprise_apres_reculs_m2 - etude.emprise_brute_m2
+        rows.append(["− Reculs obligatoires", f"{delta_reculs:.0f} m²"])
+    if etude.surface_ev_m2 > 0:
+        rows.append([f"− Espaces verts réglementaires", f"−{etude.surface_ev_m2:.0f} m²"])
+    if etude.surface_parking_m2 > 0:
+        rows.append([f"− Stationnement estimé", f"−{etude.surface_parking_m2:.0f} m²"])
+    rows.append(["Emprise nette estimée", f"{etude.emprise_sol_max_m2:.0f} m²"])
+
+    t = Table(rows, colWidths=[PAGE_W * 0.65, PAGE_W * 0.35])
+    style = [
+        # En-tête
+        ("BACKGROUND",   (0, 0), (-1, 0), _BLEU),
+        ("TEXTCOLOR",    (0, 0), (-1, 0), colors.white),
+        ("FONTNAME",     (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("SPAN",         (0, 0), (-1, 0)),
+        # Ligne total (dernière)
+        ("FONTNAME",     (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("BACKGROUND",   (0, -1), (-1, -1), colors.HexColor("#DBEAFE")),
+        ("LINEABOVE",    (0, -1), (-1, -1), 0.8, _BLEU_CLAIR),
+        # Style général
+        ("FONTSIZE",     (0, 0), (-1, -1), 8.5),
+        ("ROWBACKGROUNDS",(0, 1), (-1, -2), [_GRIS_CLAIR, colors.white]),
+        ("GRID",         (0, 0), (-1, -1), 0.3, _GRIS_BD),
+        ("ALIGN",        (1, 0), (1, -1), "RIGHT"),
+        ("LEFTPADDING",  (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING",   (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING",(0, 0), (-1, -1), 4),
+    ]
+    t.setStyle(TableStyle(style))
+    return t
 
 
 # ---------------------------------------------------------------------------
@@ -484,7 +536,17 @@ def generer_rapport(
     # --- Synthèse 4 cases colorées ---
     story.append(Paragraph("Synthèse capacitaire", s["h2"]))
     story.append(_tableau_synthese(etude, parcelle, regles))
-    story.append(Spacer(1, 0.5 * cm))
+    story.append(Spacer(1, 0.4 * cm))
+
+    # --- Section déductions (affichée si au moins une déduction appliquée) ---
+    deductions_appliquees = (
+        etude.emprise_apres_reculs_m2 < etude.emprise_brute_m2
+        or etude.surface_ev_m2 > 0
+        or etude.surface_parking_m2 > 0
+    )
+    if deductions_appliquees:
+        story.append(_section_deductions(etude, s))
+        story.append(Spacer(1, 0.4 * cm))
 
     # --- Schéma volumétrique ---
     story.append(KeepTogether([
@@ -508,6 +570,10 @@ def generer_rapport(
                         f"{regles.recul_voirie_m} m" if regles.recul_voirie_m else "Non précisé"])
     regles_rows.append(["Recul limites séparatives",
                         f"{regles.recul_limites_m} m" if regles.recul_limites_m else "Non précisé"])
+    regles_rows.append(["Stationnement",
+                        f"{regles.stationnement_par_logt} pl./logt" if regles.stationnement_par_logt else "Non précisé"])
+    regles_rows.append(["Espaces verts min",
+                        f"{regles.espace_vert_min_pct:.0f} %" if regles.espace_vert_min_pct else "Non précisé"])
 
     t_regles = Table(regles_rows, colWidths=[7 * cm, 10 * cm])
     t_regles.setStyle(_table_style())

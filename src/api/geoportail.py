@@ -124,12 +124,10 @@ def get_reglement_plu_text(partition: str, nomfic: str) -> str:
 
     Retourne le texte extrait du PDF, ou une chaîne vide en cas d'échec.
     """
-    import io
     try:
-        from pdfminer.high_level import extract_text_to_fp
-        from pdfminer.layout import LAParams
+        import fitz  # pymupdf
     except ImportError:
-        logger.error("pdfminer.six non installé — pip install pdfminer.six")
+        logger.error("pymupdf non installé — pip install pymupdf")
         return ""
 
     # Récupération de l'ID du document pour construire l'URL de téléchargement
@@ -143,9 +141,8 @@ def get_reglement_plu_text(partition: str, nomfic: str) -> str:
         r = requests.get(url, timeout=60, allow_redirects=True)
         r.raise_for_status()
 
-        output = io.StringIO()
-        extract_text_to_fp(io.BytesIO(r.content), output, laparams=LAParams())
-        texte = output.getvalue()
+        doc = fitz.open(stream=r.content, filetype="pdf")
+        texte = "".join(page.get_text() for page in doc)
         logger.info("PLU téléchargé : %d caractères extraits (%s)", len(texte), nomfic)
         return texte
     except Exception as e:
@@ -171,6 +168,8 @@ def extraire_section_zone(texte_plu: str, zone: str) -> str:
         patterns = [
             # Titre de chapitre explicite : "ZONE UA", "Zone UG"
             rf"(?:^|\n)\s*(?:ZONE|Zone)\s+{re.escape(z)}\b",
+            # Titre sur deux lignes (format PLUi pymupdf) : "zone\nUV7.1"
+            rf"(?:^|\n)\s*(?:ZONE|Zone|zone)\s*\n\s*{re.escape(z)}\b",
             # Article numéroté : "ARTICLE UA 1", "Article UC 1"
             rf"(?:^|\n)\s*ARTICLE\s+{re.escape(z)}\s+\d",
             # Article simple : "Article UA -", "Article UA."

@@ -32,7 +32,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: str = "rapport.pdf", confirm: bool = False) -> None:
+def _merger_params(regles: "ReglesUrbanisme", params: dict) -> None:
+    """
+    Surcharge les champs None de regles avec les valeurs fournies par params (UI).
+    Les valeurs PLU extraites ont la priorité ; les params UI comblent uniquement les trous.
+    """
+    if not params:
+        return
+    if regles.recul_voirie_m is None and params.get("recul_voirie_m"):
+        regles.recul_voirie_m = float(params["recul_voirie_m"])
+    if regles.recul_limites_m is None and params.get("recul_limites_m"):
+        regles.recul_limites_m = float(params["recul_limites_m"])
+    if regles.stationnement_par_logt is None and params.get("stationnement_par_logt"):
+        regles.stationnement_par_logt = float(params["stationnement_par_logt"])
+    if regles.espace_vert_min_pct is None and params.get("espace_vert_min_pct"):
+        regles.espace_vert_min_pct = float(params["espace_vert_min_pct"])
+
+
+def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: str = "rapport.pdf", confirm: bool = False, params: dict | None = None) -> None:
     """
     Exécute le pipeline complet et génère le rapport PDF.
 
@@ -40,6 +57,7 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
         adresse        : adresse postale (ex: "15 rue de la Paix, Paris")
         ref_cadastrale : référence cadastrale (ex: "75056000BX0042")
         output         : chemin du fichier PDF de sortie
+        params         : paramètres de calcul éditables (reculs, stationnement, EV, T2/T3...)
     """
     client = anthropic.Anthropic()
 
@@ -100,9 +118,17 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
     emprise_log = "non réglementée" if regles.emprise_non_reglementee else (f"{regles.emprise_sol_max_pct}%" if regles.emprise_sol_max_pct else "inconnue")
     logger.info("Règles extraites : emprise=%s, hauteur=%sm", emprise_log, regles.hauteur_max_m)
 
+    # --- Merge params UI dans les règles (comble les trous du PLU) ---
+    _merger_params(regles, params)
+
     # --- Étape 5 : calcul capacitaire ---
     logger.info("Calcul capacitaire...")
-    etude = calculer_capacite(parcelle, regles)
+    etude = calculer_capacite(
+        parcelle, regles,
+        surface_t2_m2=float(params.get("surface_t2_m2", 50.0)) if params else 50.0,
+        surface_t3_m2=float(params.get("surface_t3_m2", 65.0)) if params else 65.0,
+        ratio_habitable=float(params.get("ratio_habitable", 0.75)) if params else 0.75,
+    )
     logger.info(
         "Résultats : SP max=%sm² — %s à %s logements",
         etude.surface_plancher_max_m2,
@@ -118,13 +144,14 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
     logger.info("✓ Rapport généré : %s", output)
 
 
-def run_multi(refs: list[str], output: str = "output/rapport.pdf") -> None:
+def run_multi(refs: list[str], output: str = "output/rapport.pdf", params: dict | None = None) -> None:
     """
     Exécute le pipeline sur plusieurs parcelles adjacentes et génère un rapport PDF consolidé.
 
     Args:
         refs   : liste de références cadastrales (ex: ["75056000BX0042", "75056000BX0043"])
         output : chemin du fichier PDF de sortie
+        params : paramètres de calcul éditables (reculs, stationnement, EV, T2/T3...)
     """
     if not refs:
         raise ValueError("Fournir au moins une référence cadastrale")
@@ -143,24 +170,45 @@ def run_multi(refs: list[str], output: str = "output/rapport.pdf") -> None:
         len(parcelles), surface_totale,
     )
 
-    # --- Étape 2 : zonage PLU (centroïde de la première parcelle) ---
-    geom = parcelles[0].geometrie
-    if geom["type"] == "Point":
-        lon, lat = geom["coordinates"]
-    elif geom["type"] == "Polygon":
-        coords = geom["coordinates"][0]
-        lon = sum(c[0] for c in coords) / len(coords)
-        lat = sum(c[1] for c in coords) / len(coords)
-    elif geom["type"] == "MultiPolygon":
-        coords = geom["coordinates"][0][0]
-        lon = sum(c[0] for c in coords) / len(coords)
-        lat = sum(c[1] for c in coords) / len(coords)
-    else:
-        raise ValueError(f"Type de géométrie non supporté : {geom['type']}")
+    # --- Étape 2 : zonage PLU ---
+    # Récupérer le zonage de chaque parcelle pour détecter les zones hétérogènes
+    def _centroide(geom: dict) -> tuple[float, float]:
+        if geom["type"] == "Point":
+            return geom["coordinates"][0], geom["coordinates"][1]
+        elif geom["type"] == "Polygon":
+            coords = geom["coordinates"][0]
+        elif geom["type"] == "MultiPolygon":
+            coords = geom["coordinates"][0][0]
+        else:
+            raise ValueError(f"Type de géométrie non supporté : {geom['type']}")
+        return sum(c[0] for c in coords) / len(coords), sum(c[1] for c in coords) / len(coords)
 
     logger.info("Récupération zonage PLU...")
+    lon, lat = _centroide(parcelles[0].geometrie)
     zonage = get_zonage_plu(lat=lat, lon=lon)
     logger.info("Zone PLU : %s (%s)", zonage.zone, zonage.libelle)
+
+    # Vérification zones hétérogènes si plusieurs parcelles
+    if len(parcelles) > 1:
+        zones_detectees = {zonage.zone}
+        for p in parcelles[1:]:
+            try:
+                lo, la = _centroide(p.geometrie)
+                z = get_zonage_plu(lat=la, lon=lo)
+                zones_detectees.add(z.zone)
+            except Exception:
+                pass
+        if len(zones_detectees) > 1:
+            logger.warning("Parcelles dans des zones PLU différentes : %s", zones_detectees)
+            _alerte_zones = (
+                f"Attention : parcelles dans des zones PLU différentes "
+                f"({', '.join(sorted(zones_detectees))}). "
+                "L'analyse utilise la zone de la première parcelle — résultats à vérifier."
+            )
+        else:
+            _alerte_zones = None
+    else:
+        _alerte_zones = None
 
     # --- Étape 3 : texte du règlement PLU ---
     logger.info("Téléchargement règlement PLU (partition : %s)...", zonage.partition)
@@ -172,17 +220,40 @@ def run_multi(refs: list[str], output: str = "output/rapport.pdf") -> None:
     logger.info("Analyse PLU par IA (zone %s)...", zonage.zone)
     regles = extraire_regles_plu(texte_zone, zonage.zone, client)
 
+    # --- Merge params UI dans les règles ---
+    _merger_params(regles, params)
+
     # --- Étape 5 : calcul capacitaire sur parcelle synthétique (surface totale) ---
     from src.api.models import Parcelle
+    from shapely.geometry import shape, mapping
+    from shapely.ops import unary_union
+
+    # Union des géométries pour que shapely calcule le recul sur la vraie emprise fusionnée
+    _geoms = []
+    for p in parcelles:
+        try:
+            if p.geometrie.get("type") != "Point":
+                _geoms.append(shape(p.geometrie))
+        except Exception:
+            pass
+    geometrie_synthetique = mapping(unary_union(_geoms)) if _geoms else parcelles[0].geometrie
+
     parcelle_synthetique = Parcelle(
         ref_cadastrale=" + ".join(refs),
         surface_m2=surface_totale,
         commune=parcelles[0].commune,
         code_insee=parcelles[0].code_insee,
-        geometrie=parcelles[0].geometrie,
+        geometrie=geometrie_synthetique,
     )
     logger.info("Calcul capacitaire sur surface totale %s m²...", surface_totale)
-    etude = calculer_capacite(parcelle_synthetique, regles)
+    etude = calculer_capacite(
+        parcelle_synthetique, regles,
+        surface_t2_m2=float(params.get("surface_t2_m2", 50.0)) if params else 50.0,
+        surface_t3_m2=float(params.get("surface_t3_m2", 65.0)) if params else 65.0,
+        ratio_habitable=float(params.get("ratio_habitable", 0.75)) if params else 0.75,
+    )
+    if _alerte_zones:
+        etude.alertes.insert(0, _alerte_zones)
     logger.info(
         "Résultats : SP max=%s m² — %s à %s logements",
         etude.surface_plancher_max_m2,

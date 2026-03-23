@@ -39,7 +39,9 @@ Réponds UNIQUEMENT avec un JSON valide respectant exactement ce schéma :
   "usages_interdits": ["string", ...] — liste des usages interdits,
   "contraintes": ["string", ...] — alertes importantes (servitudes, zones N/A, ABF...),
   "recul_voirie_m": float ou null — recul obligatoire par rapport à la voirie,
-  "recul_limites_m": float ou null — recul par rapport aux limites séparatives
+  "recul_limites_m": float ou null — recul par rapport aux limites séparatives,
+  "stationnement_par_logt": float ou null — nombre de places de stationnement obligatoires par logement,
+  "espace_vert_min_pct": float ou null — pourcentage minimum du terrain devant être en espace vert
 }}
 
 Exemples few-shot :
@@ -51,6 +53,10 @@ Exemples few-shot :
 - "les constructions à usage d'habitation sont autorisées" → usages_autorises: ["habitation"]
 - "tout dépôt de matériaux est interdit" → usages_interdits: ["dépôt de matériaux"]
 - "secteur classé monument historique" → contraintes: ["classement monument historique"]
+- "il sera réalisé 1 place de stationnement par logement" → stationnement_par_logt: 1.0
+- "2 places de stationnement par logement dont 1 visiteur" → stationnement_par_logt: 2.0
+- "les espaces verts doivent représenter au moins 20% de la superficie du terrain" → espace_vert_min_pct: 20.0
+- "30% de la surface du terrain sera traité en espaces verts" → espace_vert_min_pct: 30.0
 
 Note : certains PLUi utilisent un format tableau avec des titres libres ("Emprise au sol", "Hauteur maximale") suivis de leur valeur. Lis attentivement le contexte autour de ces titres pour extraire les valeurs numériques.
 
@@ -116,6 +122,8 @@ def extraire_regles_plu(
     data.setdefault("recul_voirie_m", None)
     data.setdefault("recul_limites_m", None)
     data.setdefault("emprise_non_reglementee", False)
+    data.setdefault("stationnement_par_logt", None)
+    data.setdefault("espace_vert_min_pct", None)
 
     return ReglesUrbanisme(**data)
 
