@@ -51,6 +51,28 @@ def get_zonage_plu(lat: float, lon: float) -> ZonePLU:
         raise
 
 
+def get_zonage_geojson(lat: float, lon: float) -> dict | None:
+    """
+    Retourne la feature GeoJSON complète (géométrie + propriétés) de la zone PLU.
+    Utilisée pour afficher le polygone de zone sur la carte interactive.
+    """
+    try:
+        geom = json.dumps({"type": "Point", "coordinates": [lon, lat]})
+        r = requests.get(
+            f"{_BASE_GPU}/zone-urba",
+            params={"geom": geom},
+            timeout=15,
+        )
+        r.raise_for_status()
+        features = r.json().get("features", [])
+        if not features:
+            return None
+        return features[0]
+    except Exception as e:
+        logger.error("Erreur récupération GeoJSON zone PLU (%s, %s) : %s", lat, lon, e)
+        return None
+
+
 def get_documents_urba(code_insee: str) -> list[dict]:
     """
     Liste les documents d'urbanisme disponibles pour une commune.

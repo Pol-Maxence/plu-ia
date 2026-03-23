@@ -1,5 +1,5 @@
 """
-Tests unitaires pour le pipeline PLU·IA.
+Tests unitaires pour le pipeline zonR.
 
 Parcelle de référence pour les tests : 75056000BX0042 (Paris 16e).
 """

@@ -1,5 +1,5 @@
 """
-Point d'entrée CLI du pipeline PLU·IA.
+Point d'entrée CLI du pipeline zonR.
 
 Usage :
     python -m src.main "15 rue de la Paix, Paris"
@@ -199,7 +199,7 @@ def run_multi(refs: list[str], output: str = "output/rapport.pdf") -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="PLU·IA — Étude capacitaire automatisée")
+    parser = argparse.ArgumentParser(description="zonR — Étude capacitaire automatisée")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("adresse", nargs="?", help="Adresse postale (ex: '15 rue de la Paix, Paris')")
     group.add_argument("--ref", dest="ref_cadastrale", help="Référence cadastrale (ex: 75056000BX0042)")

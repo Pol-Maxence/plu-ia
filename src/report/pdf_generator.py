@@ -430,7 +430,7 @@ def generer_rapport(
     story = []
 
     # --- En-tête ---
-    story.append(Paragraph("PLU·IA", s["titre"]))
+    story.append(Paragraph("zonR", s["titre"]))
     story.append(Paragraph(
         f"Étude capacitaire réglementaire · {parcelle.commune} · Zone {regles.zone}",
         s["sous_titre"]
@@ -540,7 +540,7 @@ def generer_rapport(
     story.append(HRFlowable(width="100%", thickness=0.5, color=_GRIS_BD))
     story.append(Spacer(1, 0.2 * cm))
     story.append(Paragraph(
-        f"Rapport généré le {date.today().strftime('%d/%m/%Y')} par PLU·IA — analyse indicative uniquement. "
+        f"Rapport généré le {date.today().strftime('%d/%m/%Y')} par zonR — analyse indicative uniquement. "
         "Ce document ne constitue pas un acte professionnel ni une consultation juridique. "
         "Les estimations sont issues d'une lecture automatisée du règlement PLU et doivent être "
         "vérifiées par un professionnel qualifié (architecte, urbaniste) avant toute décision.",

@@ -6,3 +6,5 @@ shapely
 pdfminer.six
 pytest
 streamlit
+streamlit-folium>=0.22
+folium

@@ -39,6 +39,32 @@ def geocoder_adresse(adresse: str) -> tuple[float, float]:
         raise
 
 
+def suggerer_adresses(query: str, limit: int = 5) -> list[dict]:
+    """
+    Retourne jusqu'à `limit` suggestions d'adresses depuis api-adresse.data.gouv.fr.
+    Chaque suggestion : {"label": str, "lon": float, "lat": float}
+    """
+    try:
+        r = requests.get(
+            "https://api-adresse.data.gouv.fr/search/",
+            params={"q": query, "limit": limit},
+            timeout=10,
+        )
+        r.raise_for_status()
+        suggestions = []
+        for f in r.json().get("features", []):
+            lon, lat = f["geometry"]["coordinates"]
+            suggestions.append({
+                "label": f["properties"].get("label", ""),
+                "lon": lon,
+                "lat": lat,
+            })
+        return suggestions
+    except Exception as e:
+        logger.error("Erreur suggestions adresse %r : %s", query, e)
+        return []
+
+
 def _props_to_parcelle(props: dict, geometrie: dict) -> Parcelle:
     """Convertit les properties IGN en objet Parcelle."""
     return Parcelle(

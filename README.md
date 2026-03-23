@@ -1,4 +1,4 @@
-# PLU·IA
+# zonR
 
 Génération automatique d'études capacitaires réglementaires à partir d'une adresse ou référence cadastrale française.
 
