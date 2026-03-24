@@ -58,6 +58,7 @@ def suggerer_adresses(query: str, limit: int = 5) -> list[dict]:
                 "label": f["properties"].get("label", ""),
                 "lon": lon,
                 "lat": lat,
+                "type": f["properties"].get("type", ""),
             })
         return suggestions
     except Exception as e:

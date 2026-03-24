@@ -58,3 +58,7 @@ Règles importantes :
 
 ## Parcelle de test (tests unitaires)
 75056000BX0042 — Paris 16e (utiliser pour tous les tests unitaires pytest)
+
+## Examples
+examples/Etude capacitaire.docx → Description métier du projet
+examples/...                    → dossiers "ville" avec exemples d'études capacitaires

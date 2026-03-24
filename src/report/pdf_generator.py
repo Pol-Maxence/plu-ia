@@ -141,8 +141,11 @@ def _carte_localisation(geometries: "list[dict] | dict", zoom: int = 18) -> Imag
     """
     Génère une carte IGN avec le contour de la/des parcelle(s) dessiné en rouge.
     Accepte une seule géométrie GeoJSON ou une liste pour le mode multi-parcelles.
+    Utilise un supersampling 2× pour des contours anti-aliasés sans pixelisation.
     """
     from PIL import Image as PILImage, ImageDraw
+
+    SCALE = 2  # supersampling : dessin à 2×, downscale Lanczos → contours nets
 
     if isinstance(geometries, dict):
         geometries = [geometries]
@@ -157,7 +160,7 @@ def _carte_localisation(geometries: "list[dict] | dict", zoom: int = 18) -> Imag
     lons = [c[0] for c in all_coords]
     lats = [c[1] for c in all_coords]
 
-    # Bounding box + marge de 20%
+    # Bounding box + marge de 30%
     lon_min, lon_max = min(lons), max(lons)
     lat_min, lat_max = min(lats), max(lats)
     marge_lon = max((lon_max - lon_min) * 0.3, 0.0003)
@@ -177,39 +180,46 @@ def _carte_localisation(geometries: "list[dict] | dict", zoom: int = 18) -> Imag
 
     cols = x_max - x_min + 1
     rows = y_max - y_min + 1
-    size = (cols * 256, rows * 256)
-    canvas = PILImage.new("RGBA", size, (200, 200, 200, 255))
+    tile_px = 256 * SCALE  # taille des tuiles au niveau 2×
+    size_2x = (cols * tile_px, rows * tile_px)
+    canvas = PILImage.new("RGBA", size_2x, (200, 200, 200, 255))
 
-    # Couche 1 : fond topo IGN
+    # Couche 1 : fond topo IGN (tuiles upscalées 2×)
     for xi, tx in enumerate(range(x_min, x_max + 1)):
         for yi, ty in enumerate(range(y_min, y_max + 1)):
             tile = _get_tile(zoom, tx, ty, "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2")
             if tile:
-                canvas.paste(tile, (xi * 256, yi * 256))
+                tile_2x = tile.resize((tile_px, tile_px), PILImage.LANCZOS)
+                canvas.paste(tile_2x, (xi * tile_px, yi * tile_px))
 
-    # Couche 2 : parcelles cadastrales (délimitations + numéros), opacité 85%
-    cadastre_layer = PILImage.new("RGBA", size, (0, 0, 0, 0))
+    # Couche 2 : parcelles cadastrales, opacité 85%
+    cadastre_layer = PILImage.new("RGBA", size_2x, (0, 0, 0, 0))
     for xi, tx in enumerate(range(x_min, x_max + 1)):
         for yi, ty in enumerate(range(y_min, y_max + 1)):
             tile = _get_tile(zoom, tx, ty, "CADASTRALPARCELS.PARCELLAIRE_EXPRESS")
             if tile:
-                cadastre_layer.paste(tile, (xi * 256, yi * 256))
-    # Ajuster l'opacité de la couche cadastrale
+                tile_2x = tile.resize((tile_px, tile_px), PILImage.LANCZOS)
+                cadastre_layer.paste(tile_2x, (xi * tile_px, yi * tile_px))
     r2, g2, b2, a2 = cadastre_layer.split()
     a2 = a2.point(lambda p: int(p * 0.85))
     cadastre_layer = PILImage.merge("RGBA", (r2, g2, b2, a2))
     canvas = PILImage.alpha_composite(canvas, cadastre_layer)
 
-    # Couche 3 : contour de la/des parcelle(s) analysée(s) (rouge semi-transparent)
-    overlay = PILImage.new("RGBA", size, (0, 0, 0, 0))
+    # Couche 3 : contour de la/des parcelle(s) — dessin 2× pour anti-aliasing
+    overlay = PILImage.new("RGBA", size_2x, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
     for ring in all_rings:
-        pixels = [_lon_lat_to_pixel(c[0], c[1], zoom, x_min, y_min) for c in ring]
-        if len(pixels) >= 2:
-            draw.polygon(pixels, fill=(220, 38, 38, 60))
-            draw.line(pixels + [pixels[0]], fill=(220, 38, 38, 230), width=4)
+        pixels_1x = [_lon_lat_to_pixel(c[0], c[1], zoom, x_min, y_min) for c in ring]
+        pixels_2x = [(x * SCALE, y * SCALE) for x, y in pixels_1x]
+        if len(pixels_2x) >= 2:
+            draw.polygon(pixels_2x, fill=(220, 38, 38, 55))
+            draw.line(pixels_2x + [pixels_2x[0]], fill=(220, 38, 38, 220), width=3)
     canvas = PILImage.alpha_composite(canvas, overlay)
+
+    # Downscale 2× → 1× via Lanczos (effet anti-aliasing sur les contours)
     canvas = canvas.convert("RGB")
+    size_1x = (cols * 256, rows * 256)
+    canvas = canvas.resize(size_1x, PILImage.LANCZOS)
 
     # Recadrer sur la bounding box utile avec marges
     px_min, py_max = _lon_lat_to_pixel(lon_min, lat_min, zoom, x_min, y_min)
@@ -219,11 +229,11 @@ def _carte_localisation(geometries: "list[dict] | dict", zoom: int = 18) -> Imag
     if px_max > px_min and py_max > py_min:
         canvas = canvas.crop((px_min, py_min, px_max, py_max))
 
-    # Conversion en image ReportLab
+    # Conversion en image ReportLab — taille ajustée pour tenir dans la colonne sans débordement
     buf = io.BytesIO()
-    canvas.save(buf, format="PNG")
+    canvas.save(buf, format="PNG", dpi=(150, 150))
     buf.seek(0)
-    return Image(buf, width=9 * cm, height=9 * cm)
+    return Image(buf, width=8.2 * cm, height=8.2 * cm)
 
 
 # ---------------------------------------------------------------------------
@@ -340,7 +350,7 @@ def _tableau_synthese(etude: EtudeCapacitaire, parcelle: Parcelle, regles: Regle
     orange_bg = colors.HexColor("#FFEDD5")
 
     if regles.emprise_non_reglementee:
-        _label_emprise = f"Non réglementée · 80% appliqué"
+        _label_emprise = f"Non réglementée · 100% appliqué"
     elif regles.emprise_sol_max_pct:
         _label_emprise = f"{regles.emprise_sol_max_pct:.0f}% de {parcelle.surface_m2:.0f} m²"
     else:
@@ -418,19 +428,29 @@ def _table_style() -> TableStyle:
 
 def _section_deductions(etude: EtudeCapacitaire, s: dict) -> Table:
     """
-    Tableau récapitulatif des déductions appliquées sur l'emprise brute PLU.
-    Affiché uniquement si au moins une déduction est non nulle.
+    Tableau récapitulatif des déductions appliquées.
+    - Emprise : reculs + espaces verts → footprint constructible
+    - Surface de plancher : stationnement estimé → SP nette
     """
-    rows = [["Déductions sur l'emprise constructible", ""]]
+    rows = [["Calcul de la surface de plancher", ""]]
+
+    # --- Emprise ---
     rows.append(["Emprise brute PLU", f"{etude.emprise_brute_m2:.0f} m²"])
     if etude.emprise_apres_reculs_m2 < etude.emprise_brute_m2:
         delta_reculs = etude.emprise_apres_reculs_m2 - etude.emprise_brute_m2
         rows.append(["− Reculs obligatoires", f"{delta_reculs:.0f} m²"])
     if etude.surface_ev_m2 > 0:
-        rows.append([f"− Espaces verts réglementaires", f"−{etude.surface_ev_m2:.0f} m²"])
-    if etude.surface_parking_m2 > 0:
-        rows.append([f"− Stationnement estimé", f"−{etude.surface_parking_m2:.0f} m²"])
+        rows.append(["− Espaces verts réglementaires", f"−{etude.surface_ev_m2:.0f} m²"])
     rows.append(["Emprise nette estimée", f"{etude.emprise_sol_max_m2:.0f} m²"])
+
+    # --- Surface de plancher ---
+    rows.append([
+        f"× {etude.nb_niveaux_estimes} niveaux → SP brute",
+        f"{etude.sp_brute_m2:.0f} m²",
+    ])
+    if etude.surface_parking_m2 > 0:
+        rows.append(["− Stationnement (surface de plancher)", f"−{etude.surface_parking_m2:.0f} m²"])
+    rows.append(["Surface de plancher max", f"{etude.surface_plancher_max_m2:.0f} m²"])
 
     t = Table(rows, colWidths=[PAGE_W * 0.65, PAGE_W * 0.35])
     style = [
@@ -514,11 +534,12 @@ def generer_rapport(
         ]
         if parcelle.adresse:
             info_rows.insert(0, ["Adresse analysée", parcelle.adresse])
-    t_info = Table(info_rows, colWidths=[4 * cm, 4.5 * cm])
+    _col2_w = PAGE_W - 8.5 * cm
+    t_info = Table(info_rows, colWidths=[_col2_w * 0.45, _col2_w * 0.55])
     t_info.setStyle(_table_style())
 
     if carte:
-        bloc_haut = Table([[carte, t_info]], colWidths=[8.5 * cm, 8.5 * cm])
+        bloc_haut = Table([[carte, t_info]], colWidths=[8.5 * cm, PAGE_W - 8.5 * cm])
         bloc_haut.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING",  (0, 0), (-1, -1), 0),
@@ -538,12 +559,8 @@ def generer_rapport(
     story.append(_tableau_synthese(etude, parcelle, regles))
     story.append(Spacer(1, 0.4 * cm))
 
-    # --- Section déductions (affichée si au moins une déduction appliquée) ---
-    deductions_appliquees = (
-        etude.emprise_apres_reculs_m2 < etude.emprise_brute_m2
-        or etude.surface_ev_m2 > 0
-        or etude.surface_parking_m2 > 0
-    )
+    # --- Section déductions — toujours affichée (montre emprise → SP brute → SP nette) ---
+    deductions_appliquees = True
     if deductions_appliquees:
         story.append(_section_deductions(etude, s))
         story.append(Spacer(1, 0.4 * cm))

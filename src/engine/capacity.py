@@ -27,12 +27,13 @@ _SURFACE_LOGT_PROVISION_M2 = 60.0  # surface moyenne provisoire pour estimer nb 
 
 @dataclass
 class EtudeCapacitaire:
-    emprise_sol_max_m2: float       # emprise nette après toutes déductions
+    emprise_sol_max_m2: float       # emprise nette (reculs + EV) = footprint constructible
     emprise_brute_m2: float         # plafond PLU brut (avant déductions)
     emprise_apres_reculs_m2: float  # après buffer shapely
-    surface_ev_m2: float            # surface déduite pour espaces verts
-    surface_parking_m2: float       # surface déduite pour stationnement
-    surface_plancher_max_m2: float
+    surface_ev_m2: float            # emprise déduite pour espaces verts
+    surface_parking_m2: float       # surface de plancher déduite pour stationnement
+    sp_brute_m2: float              # surface de plancher brute (emprise_nette × niveaux)
+    surface_plancher_max_m2: float  # surface de plancher nette (après déduction parking)
     hauteur_max_m: float
     nb_niveaux_estimes: int
     nb_logements_estimes_min: int
@@ -171,32 +172,34 @@ def calculer_capacite(
         surface_ev_m2 = 0.0
 
     # -------------------------------------------------------------------------
-    # Déduction 3 — Stationnement (estimation provisoire → itération unique)
+    # Emprise nette = emprise après reculs − EV
+    # Le stationnement est déduit de la surface de plancher (SP), pas de l'emprise au sol.
+    # Plancher à 5% de l'emprise brute pour éviter résultats aberrants.
+    # -------------------------------------------------------------------------
+    emprise_nette_m2 = emprise_apres_reculs_m2 - surface_ev_m2
+    emprise_nette_m2 = max(emprise_nette_m2, emprise_brute_m2 * 0.05)
+
+    # -------------------------------------------------------------------------
+    # Surface de plancher brute
+    # -------------------------------------------------------------------------
+    if regles.surface_plancher_max_m2 is not None:
+        sp_brute_m2 = regles.surface_plancher_max_m2
+        if emprise_nette_m2 > 0:
+            nb_niveaux = max(1, round(sp_brute_m2 / emprise_nette_m2))
+    else:
+        sp_brute_m2 = emprise_nette_m2 * nb_niveaux
+
+    # -------------------------------------------------------------------------
+    # Déduction 3 — Stationnement (sur la surface de plancher, pas sur l'emprise)
     # -------------------------------------------------------------------------
     if regles.stationnement_par_logt and regles.stationnement_par_logt > 0:
-        emprise_disponible = max(0.0, emprise_apres_reculs_m2 - surface_ev_m2)
-        sp_provisoire = emprise_disponible * nb_niveaux
-        lgt_provisoire = max(1, int(sp_provisoire * ratio_habitable / _SURFACE_LOGT_PROVISION_M2))
+        lgt_provisoire = max(1, int(sp_brute_m2 * ratio_habitable / _SURFACE_LOGT_PROVISION_M2))
         surface_parking_m2 = lgt_provisoire * regles.stationnement_par_logt * _SURFACE_PAR_PLACE_M2
     else:
         surface_parking_m2 = 0.0
 
-    # -------------------------------------------------------------------------
-    # Emprise nette = emprise après reculs − EV − parking
-    # Plancher à 10% de l'emprise brute pour éviter résultats aberrants
-    # -------------------------------------------------------------------------
-    emprise_nette_m2 = emprise_apres_reculs_m2 - surface_ev_m2 - surface_parking_m2
-    emprise_nette_m2 = max(emprise_nette_m2, emprise_brute_m2 * 0.05)
-
-    # -------------------------------------------------------------------------
-    # Surface de plancher
-    # -------------------------------------------------------------------------
-    if regles.surface_plancher_max_m2 is not None:
-        sp_max_m2 = regles.surface_plancher_max_m2
-        if emprise_nette_m2 > 0:
-            nb_niveaux = max(1, round(sp_max_m2 / emprise_nette_m2))
-    else:
-        sp_max_m2 = emprise_nette_m2 * nb_niveaux
+    # SP nette = SP brute − parking (plancher à 5% de la SP brute)
+    sp_max_m2 = max(sp_brute_m2 - surface_parking_m2, sp_brute_m2 * 0.05)
 
     # Alerte zone non constructible
     if regles.zone and (regles.zone.startswith("N") or regles.zone.startswith("A")):
@@ -222,6 +225,7 @@ def calculer_capacite(
         emprise_apres_reculs_m2=round(emprise_apres_reculs_m2, 1),
         surface_ev_m2=round(surface_ev_m2, 1),
         surface_parking_m2=round(surface_parking_m2, 1),
+        sp_brute_m2=round(sp_brute_m2, 1),
         surface_plancher_max_m2=round(sp_max_m2, 1),
         hauteur_max_m=hauteur_m,
         nb_niveaux_estimes=nb_niveaux,

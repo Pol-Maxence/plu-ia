@@ -52,12 +52,10 @@ defaults = {
     "adresse_query": "",
     "selected_parcelles": [],
     "zones_geojson": [],
-    "multi_mode": False,
     "map_center": [46.5, 2.5],
     "map_zoom": 6,
     "last_click": None,
-    "skip_next_click": False,
-    "map_version": 0,  # incrémenté à chaque déplacement programmatique de la carte
+    "map_version": 0,  # incrémenté à chaque modification de sélection
     # Paramètres de calcul éditables
     "param_stat": 1.0,   # places stationnement par logement
     "param_ev": 20.0,    # % espaces verts minimum
@@ -110,15 +108,23 @@ col_panel, col_carte = st.columns([1, 2], gap="large")
 
 with col_panel:
 
-    # --- Recherche par adresse ---
+    # --- Recherche par adresse (Entrée ou bouton) ---
     st.subheader("Recherche")
-    query = st.text_input(
-        "Adresse",
-        placeholder="14 rue de la Paix, Paris…",
-        label_visibility="collapsed",
-    )
+    _TYPE_LABELS = {
+        "housenumber": "n°",
+        "street": "rue",
+        "locality": "lieu-dit",
+        "municipality": "commune",
+    }
+    with st.form("form_recherche", clear_on_submit=False):
+        query = st.text_input(
+            "Adresse",
+            placeholder="14 rue de la Paix, Paris…",
+            label_visibility="collapsed",
+        )
+        submitted = st.form_submit_button("Rechercher", use_container_width=True)
 
-    if st.button("Rechercher", use_container_width=True):
+    if submitted:
         if query.strip():
             from src.api.cadastre import suggerer_adresses
             with st.spinner("Recherche…"):
@@ -129,7 +135,11 @@ with col_panel:
 
     # --- Liste déroulante des suggestions ---
     if st.session_state.suggestions:
-        labels = [s["label"] for s in st.session_state.suggestions]
+        # Afficher le type (n°, rue, lieu-dit…) pour guider l'utilisateur
+        labels = [
+            f"{s['label']}  [{_TYPE_LABELS.get(s.get('type', ''), s.get('type', ''))}]"
+            for s in st.session_state.suggestions
+        ]
         choix = st.radio(
             "Sélectionnez une adresse",
             labels,
@@ -137,54 +147,63 @@ with col_panel:
             label_visibility="collapsed",
         )
         suggestion_selectionnee = next(
-            (s for s in st.session_state.suggestions if s["label"] == choix), None
+            (s for s in st.session_state.suggestions if
+             f"{s['label']}  [{_TYPE_LABELS.get(s.get('type', ''), s.get('type', ''))}]" == choix),
+            None,
         )
+
+        _sug_type = suggestion_selectionnee.get("type", "") if suggestion_selectionnee else ""
+        _zoom_par_type = {"housenumber": 19, "interpolation": 19, "street": 18, "locality": 16, "municipality": 14}
 
         if st.button("Confirmer cette adresse", use_container_width=True):
             if suggestion_selectionnee:
-                from src.api.cadastre import get_parcelle_by_coords
-                from src.api.geoportail import get_zonage_geojson
-                with st.spinner("Identification de la parcelle…"):
-                    try:
-                        lon = suggestion_selectionnee["lon"]
-                        lat = suggestion_selectionnee["lat"]
-                        parcelle = get_parcelle_by_coords(lon, lat)
-                        parcelle.adresse = suggestion_selectionnee["label"]
-                        zone = get_zonage_geojson(lat, lon)
+                lon = suggestion_selectionnee["lon"]
+                lat = suggestion_selectionnee["lat"]
 
-                        if st.session_state.multi_mode:
-                            # Éviter les doublons
+                if _sug_type in ("housenumber", "interpolation", ""):
+                    # Adresse précise → identifier la parcelle
+                    from src.api.cadastre import get_parcelle_by_coords
+                    from src.api.geoportail import get_zonage_geojson
+                    with st.spinner("Identification de la parcelle…"):
+                        try:
+                            parcelle = get_parcelle_by_coords(lon, lat)
+                            parcelle.adresse = suggestion_selectionnee["label"]
+                            zone = get_zonage_geojson(lat, lon)
+
                             refs_existants = [p.ref_cadastrale for p in st.session_state.selected_parcelles]
-                            if parcelle.ref_cadastrale not in refs_existants:
+                            if parcelle.ref_cadastrale in refs_existants:
+                                idx = refs_existants.index(parcelle.ref_cadastrale)
+                                st.session_state.selected_parcelles.pop(idx)
+                                st.session_state.zones_geojson.pop(idx)
+                            else:
                                 st.session_state.selected_parcelles.append(parcelle)
                                 st.session_state.zones_geojson.append(zone)
-                        else:
-                            st.session_state.selected_parcelles = [parcelle]
-                            st.session_state.zones_geojson = [zone]
 
-                        # Centrer la carte sur la parcelle (fallback = coords BAN)
-                        st.session_state.map_center = _centroid(
-                            parcelle.geometrie, fallback_lat=lat, fallback_lon=lon
-                        )
-                        st.session_state.map_zoom = 19
-                        st.session_state.map_version += 1
-                        st.session_state.suggestions = []
-                        st.session_state.skip_next_click = True
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erreur : {e}")
+                            st.session_state.map_center = _centroid(
+                                parcelle.geometrie, fallback_lat=lat, fallback_lon=lon
+                            )
+                            st.session_state.map_zoom = 19
+                            st.session_state.map_version += 1
+                            st.session_state.suggestions = []
+                            st.rerun()
+                        except Exception as e:
+                            if "Aucune parcelle" in str(e):
+                                st.error(
+                                    "Aucune parcelle cadastrale trouvée à cet emplacement. "
+                                    "Vérifiez que l'adresse contient un numéro de rue, "
+                                    "ou cliquez directement sur la parcelle sur la carte."
+                                )
+                            else:
+                                st.error(f"Erreur : {e}")
+                else:
+                    # Rue / commune → naviguer vers la zone pour clic manuel
+                    st.session_state.map_center = [lat, lon]
+                    st.session_state.map_zoom = _zoom_par_type.get(_sug_type, 15)
+                    st.session_state.map_version += 1
+                    st.session_state.suggestions = []
+                    st.rerun()
 
     st.divider()
-
-    # --- Mode multi-parcelles ---
-    multi = st.checkbox(
-        "Mode multi-parcelles",
-        value=st.session_state.multi_mode,
-        help="Activez pour sélectionner plusieurs parcelles adjacentes.",
-    )
-    if multi != st.session_state.multi_mode:
-        st.session_state.multi_mode = multi
-        st.rerun()
 
     # --- Parcelles sélectionnées ---
     if st.session_state.selected_parcelles:
@@ -388,28 +407,29 @@ with col_carte:
             ),
         ).add_to(m)
 
-    # Affichage + capture du clic et du zoom courant
+    # Affichage + capture du clic, du zoom et du centre courant
     map_data = st_folium(
         m,
         height=580,
         use_container_width=True,
-        returned_objects=["last_clicked", "zoom"],
+        returned_objects=["last_clicked", "zoom", "center"],
         key=f"carte_plu_{st.session_state.map_version}",
     )
 
-    # Mémoriser le zoom choisi par l'utilisateur
-    if map_data and map_data.get("zoom"):
-        st.session_state.map_zoom = map_data["zoom"]
+    # Persister zoom et centre pour éviter le reset au prochain rerun
+    if map_data:
+        if map_data.get("zoom"):
+            st.session_state.map_zoom = map_data["zoom"]
+        if map_data.get("center"):
+            c = map_data["center"]
+            st.session_state.map_center = [c["lat"], c["lng"]]
 
     # Traitement du clic carte
     if map_data and map_data.get("last_clicked"):
         click = map_data["last_clicked"]
         click_key = (round(click["lat"], 6), round(click["lng"], 6))
-        # Ignorer le clic fantôme qui suit une confirmation d'adresse
-        if st.session_state.skip_next_click:
-            st.session_state.skip_next_click = False
-            st.session_state.last_click = click_key
-        elif click_key != st.session_state.last_click:
+        # Dédupliquer : ignorer si même clic que le précédent (protection double-rendu Streamlit)
+        if click_key != st.session_state.last_click:
             st.session_state.last_click = click_key
             with st.spinner("Identification de la parcelle…"):
                 try:
@@ -418,24 +438,25 @@ with col_carte:
                     parcelle = get_parcelle_by_coords(click["lng"], click["lat"])
                     zone = get_zonage_geojson(click["lat"], click["lng"])
 
-                    if st.session_state.multi_mode:
-                        refs_existants = [p.ref_cadastrale for p in st.session_state.selected_parcelles]
-                        if parcelle.ref_cadastrale not in refs_existants:
-                            st.session_state.selected_parcelles.append(parcelle)
-                            st.session_state.zones_geojson.append(zone)
-                        # En multi-mode : garder le zoom et la position actuels
+                    # Toggle : ajoute si absent, retire si déjà sélectionné
+                    refs_existants = [p.ref_cadastrale for p in st.session_state.selected_parcelles]
+                    if parcelle.ref_cadastrale in refs_existants:
+                        idx = refs_existants.index(parcelle.ref_cadastrale)
+                        st.session_state.selected_parcelles.pop(idx)
+                        st.session_state.zones_geojson.pop(idx)
                     else:
-                        st.session_state.selected_parcelles = [parcelle]
-                        st.session_state.zones_geojson = [zone]
-                        # Centrer sur la nouvelle parcelle au zoom max
-                        st.session_state.map_center = _centroid(
-                            parcelle.geometrie, fallback_lat=click["lat"], fallback_lon=click["lng"]
-                        )
-                        st.session_state.map_zoom = 19
+                        st.session_state.selected_parcelles.append(parcelle)
+                        st.session_state.zones_geojson.append(zone)
+                        # Centrer sur la première parcelle ajoutée seulement
+                        if len(st.session_state.selected_parcelles) == 1:
+                            st.session_state.map_center = _centroid(
+                                parcelle.geometrie, fallback_lat=click["lat"], fallback_lon=click["lng"]
+                            )
+                            st.session_state.map_zoom = 19
 
                     st.session_state.map_version += 1
                     st.rerun()
                 except Exception as e:
                     st.warning(f"Impossible d'identifier la parcelle : {e}")
 
-    st.caption("Cliquez sur une parcelle pour la sélectionner. Activez le mode multi-parcelles pour en sélectionner plusieurs.")
+    st.caption("Cliquez sur une parcelle pour l'ajouter à la sélection. Cliquez à nouveau pour la retirer.")

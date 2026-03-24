@@ -163,33 +163,51 @@ def extraire_section_zone(texte_plu: str, zone: str) -> str:
     if not texte_plu:
         return ""
 
+    _TOC_RE = re.compile(r"[\s\.]{6,}|\d{1,3}\s*$")  # ligne de table des matières
+
     def _chercher(z: str) -> re.Match | None:
-        """Cherche le début de la section pour un code de zone donné."""
+        """
+        Cherche le début de la section pour un code de zone donné.
+        Ignore les correspondances dans la table des matières (lignes de points).
+        Utilise (?!\\w) au lieu de \\b pour gérer les zones finissant par un
+        caractère non-alphanumérique (ex: UAa+).
+        """
+        esc = re.escape(z)
         patterns = [
             # Titre de chapitre explicite : "ZONE UA", "Zone UG"
-            rf"(?:^|\n)\s*(?:ZONE|Zone)\s+{re.escape(z)}\b",
+            rf"(?:^|\n)\s*(?:ZONE|Zone)\s+{esc}(?!\w)",
             # Titre sur deux lignes (format PLUi pymupdf) : "zone\nUV7.1"
-            rf"(?:^|\n)\s*(?:ZONE|Zone|zone)\s*\n\s*{re.escape(z)}\b",
+            rf"(?:^|\n)\s*(?:ZONE|Zone|zone)\s*\n\s*{esc}(?!\w)",
             # Article numéroté : "ARTICLE UA 1", "Article UC 1"
-            rf"(?:^|\n)\s*ARTICLE\s+{re.escape(z)}\s+\d",
+            rf"(?:^|\n)\s*ARTICLE\s+{esc}\s+\d",
             # Article simple : "Article UA -", "Article UA."
-            rf"(?:^|\n)\s*Article\s+{re.escape(z)}[\s\.\-–]",
+            rf"(?:^|\n)\s*Article\s+{esc}[\s\.\-–]",
             # Titre avec tiret : "UA - Dispositions", "UC –"
-            rf"(?:^|\n)\s*{re.escape(z)}\s*[-–]\s",
+            rf"(?:^|\n)\s*{esc}\s*[-–]\s",
             # Chapitre/Titre : "CHAPITRE UA", "TITRE UC"
-            rf"(?:^|\n)\s*(?:CHAPITRE|TITRE|SECTION)\s+(?:[\w\s]*\s+)?{re.escape(z)}\b",
+            rf"(?:^|\n)\s*(?:CHAPITRE|TITRE|SECTION)\s+(?:[\w\s]*\s+)?{esc}(?!\w)",
             # Dispositions applicables à la zone : "Dispositions applicables à la zone UA"
-            rf"Dispositions applicables\s+(?:à\s+)?(?:la\s+)?zone\s+{re.escape(z)}\b",
+            rf"Dispositions applicables\s+(?:à\s+)?(?:la\s+)?zone\s+{esc}(?!\w)",
         ]
         for p in patterns:
-            m = re.search(p, texte_plu, re.IGNORECASE | re.MULTILINE)
-            if m:
+            for m in re.finditer(p, texte_plu, re.IGNORECASE | re.MULTILINE):
+                # Ignorer les entrées de table des matières (points de suspension ou numéro de page)
+                suite = texte_plu[m.end(): m.end() + 80]
+                if _TOC_RE.match(suite.lstrip()):
+                    continue
                 return m
         return None
 
     match = _chercher(zone)
 
-    # Si sous-zone non trouvée, tenter avec la zone de base (ex: UCb → UC)
+    # Fallback 1 : supprimer les suffixes non-alphanumériques (ex: UAa+ → UAa)
+    zone_stripped = re.sub(r'[^a-zA-Z0-9]+$', '', zone)
+    if not match and zone_stripped != zone:
+        match = _chercher(zone_stripped)
+        if match:
+            logger.info("Zone %r non trouvée, section extraite depuis %r (strip suffixe)", zone, zone_stripped)
+
+    # Fallback 2 : zone de base (majuscules uniquement, ex: UCb → UC, UAa+ → UA)
     zone_base = re.match(r"([A-Z]+)", zone)
     if not match and zone_base and zone_base.group(1) != zone:
         z_base = zone_base.group(1)
@@ -247,7 +265,7 @@ def _extraire_articles_cles(section: str, zone_base: str) -> str:
     """
     extraits = []
 
-    # --- Format 1 : articles numérotés (PLU classique) ---
+    # --- Format 1 : articles numérotés classiques (PLU) ---
     for num in ["9", "10", "11", "14"]:
         m = re.search(
             rf"(?:ARTICLE\s+{re.escape(zone_base)}\s*{num}\b|"
@@ -258,8 +276,18 @@ def _extraire_articles_cles(section: str, zone_base: str) -> str:
         if m:
             extraits.append(section[max(0, m.start() - 20): m.start() + 2_000])
 
-    # --- Format 2 : titres libres (PLUi / tableau) ---
-    # Chercher "Emprise au sol" et "Hauteur" comme titres de ligne de tableau
+    # --- Format 1b : article par titre de rubrique (PLUi, numéro variable) ---
+    # Ex: "ARTICLE UA 5 : HAUTEUR DES CONSTRUCTIONS", "ARTICLE UA 4 : EMPRISE AU SOL"
+    for rubrique in [r"HAUTEUR\b", r"EMPRISE\s+AU\s+SOL"]:
+        m = re.search(
+            rf"ARTICLE\s+{re.escape(zone_base)}\s+\d+\s*[:\-–]\s*{rubrique}",
+            section,
+            re.IGNORECASE,
+        )
+        if m:
+            extraits.append(section[max(0, m.start() - 20): m.start() + 3_000])
+
+    # --- Format 2 : titres libres (PLUi tableau ou PLU avec titres en clair) ---
     mots_cles = [
         r"Emprise\s+au\s+sol\s+des\s+constructions",
         r"Emprise\s+au\s+sol",
@@ -269,7 +297,6 @@ def _extraire_articles_cles(section: str, zone_base: str) -> str:
     for pattern in mots_cles:
         m = re.search(pattern, section, re.IGNORECASE)
         if m:
-            # Extraire un bloc centré sur le titre (±1500 chars) pour capturer label + valeur
             debut = max(0, m.start() - 200)
             fin = min(len(section), m.start() + 1_500)
             extraits.append(section[debut:fin])
