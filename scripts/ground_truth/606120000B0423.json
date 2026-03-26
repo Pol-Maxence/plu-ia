@@ -1,0 +1,82 @@
+{
+  "ref": "606120000B0423",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Senlis",
+  "zone": "UCc",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": 25.0,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 15.0,
+      "type": "faitage",
+      "valeur_egout": null,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 2.5
+    },
+    "recul_voirie_m": {
+      "valeur": 5.0,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 3.0,
+      "formule": "H",
+      "minimum_m": 3.0
+    },
+    "stationnement_par_logt": {
+      "accession": 2,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": 25.0,
+      "pleine_terre_pct": null,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Bâtiments de France (ABF)": "Sites inscrits",
+      "Parcs naturels et réserves": "Parcs Naturels Régionaux (PNR)",
+      "Zones de remontées de nappes": "Inondations de cave (fiabilité moyenne)",
+      "Aléa sismique": "Zone de sismicité 1 - Très faible",
+      "ORT": "ORT signée sur la commune mais périmètre précis non disponible",
+      "Termites - Carte départementale des infestations": "Niveau d'infestation inconnu",
+      "Gaz radioactif (potentiel radon)": "Très faible (zone 1)",
+      "Zones de présomption de prescription archéologique": "ZPPA de Senlis",
+      "Action coeur de ville": "Oui",
+      "Pinel": "Zone A",
+      "Classement sonore des routes": "Largeur maximale de secteur 30 mètres ; Largeur maximale de secteur 250 mètres"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "UCb",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Autorisée à condition de ne pas générer de nuisances incompatibles avec la fonction urbaine mixte souhaitée pour la zone",
+      "Construction de commerces": "Autorisée sous conditions : - de ne pas excéder 250 m² de surface de vente; - d'être localisées dans les secteurs délimités au document graphique du PLU (préservation de la diversité commerciale)",
+      "Construction de locaux artisanaux": "Autorisée à condition de ne pas générer de nuisances incompatibles avec la fonction urbaine mixte souhaitée pour la zone",
+      "Emprise au sol maximale autorisée": "75% (en raison d'une obligation de 25% d'espaces libres paysagers) (en cas de réalisation de programmes de logements locatifs sociaux au sens de l'article 55 de la loi SRU, une majoration de 20% maximum du volume constructible est possible)",
+      "Emprise espaces verts": "25% de surface d'espaces verts",
+      "Hauteur au faîtage": "9 mètres",
+      "Hauteur à l'égout": "4,5 mètres (la hauteur à l'égout pourra être portée à 6 mètres en fonction des avoisinants et si la préservation des vues le permet)",
+      "Niveaux pour un immeuble collectif": "2.5",
+      "Précision sur la hauteur": "En cas de réalisation de programmes de logements locatifs sociaux au sens de l'article 55 de la loi SRU, une majoration de 20% maximum du volume constructible est possible",
+      "Précision sur le(s) dernier(s) étage(s) de la construction": "Les combles et toitures doivent présenter une simplicité de volume et une unité de conception et devra respecter la typologie architecturale et l'époque de construction du bâtiment - les constructions comportent une toiture à deux pans symétriques dont la pente est comprise entre 35 et 50° sur l'horizontale - les toitures à 4 pentes sont admises pour les bâtiments à l'angle de voies ou isolés sur parcelle - les toitures terrasse peuvent être autorisées ponctuellement sous réserve du respect de la ligne d'égout de toits du quartier environnant",
+      "Précision sur la hauteur du rez-de-chaussée": "Dans les secteurs repérés au document graphique par la 'diversité commerciale' : le rez-de-chaussée sur rue auront une hauteur plafond comprise entre 3,50 minimum et 4,10 mètres maximum",
+      "Marge de recul": "5 mètres minimum - les constructions doivent être implantées prioritairement en recul de la continuité bâtie existante sur les terrains voisins",
+      "Profondeur": "Non réglementée",
+      "Retrait par rapport aux limites latérales": "A) Dans une bande de 18 mètres de profondeur : aucun retrait ou sur une limite minimum avec un retrait (R) = moitié de la hauteur mesurée à l'égout du toit (L=H/2) avec 3 mètres minimum. B) au-delà de 18 mètres de profondeur : avec un retrait (R) = moitié de la hauteur mesurée à l'égout du toit (L=H/2) avec 3 mètres minimum (toutefois, en limite possible dans les cas suivants : - si la construction projetée s'adosse à une construction existante de gabarit comparable elle-même édifiée en limite; - si sont édifiées simultanément des bâtiments jointifs de gabarits comparables; - soit sa hauteur totale n'excède pas 3,50 mètres et la longueur édifiée en limite n'excéde pas 10 mètres). C) Pour l'ensemble des cas : - 5 mètres minimum de la tête des berges des cours d'eaux",
+      "Retrait minimal par rapport au fond de terrain": "A) Dans une bande de 18 mètres de profondeur : aucun retrait ou sur une limite minimum avec un retrait (R) = moitié de la hauteur mesurée à l'égout du toit (L=H/2) avec 3 mètres minimum. B) au-delà de 18 mètres de profondeur : avec un retrait (R) = moitié de la hauteur mesurée à l'égout du toit (L=H/2) avec 3 mètres minimum (toutefois, en limite possible dans les cas suivants : - si la construction projetée s'adosse à une construction existante de gabarit comparable elle-même édifiée en limite; - si sont édifiées simultanément des bâtiments jointifs de gabarits comparables; - soit sa hauteur totale n'excède pas 3,50 mètres et la longueur édifiée en limite n'excéde pas 10 mètres). C) Pour l'ensemble des cas : - 5 mètres minimum de la tête des berges des cours d'eaux",
+      "Retrait entre bâtiments": "Non réglementée",
+      "Stationnement obligatoire": "2 places par logement (1 place visiteur supplémentaire par tranche de 5 logements devra également être prévue)",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une station de RER, ou d'un transport en commun en site propre",
+      "Stationnement obligatoire pour les bureaux": "1 place par tranche de 30 m² de surface de plancher",
+      "Stationnement bureau en zone de bonne desserte": "1 place par tranche de 30 m² de surface de plancher"
+    }
+  }
+}

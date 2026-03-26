@@ -1,0 +1,87 @@
+{
+  "ref": "33281000BR0372",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Mérignac",
+  "zone": "UM16",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": 40.0,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 8.0,
+      "type": "faitage",
+      "valeur_egout": 4.0,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 2.0
+    },
+    "recul_voirie_m": {
+      "valeur": 4.0,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 4.0,
+      "formule": null,
+      "minimum_m": null
+    },
+    "stationnement_par_logt": {
+      "accession": 1.0,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": 25.0,
+      "pleine_terre_pct": 5.0,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Zone": "M1",
+      "Zones de remontées de nappes": "Inondations de cave (fiabilité forte)",
+      "Aléa sismique": "Zone de sismicité 2 - Faible",
+      "< 800m d'une station": "Oui",
+      "Retrait-gonflement des argiles": "La probabilité de rencontrer des matériaux argileux en sous-sol est moyenne",
+      "Termites - Carte départementale des infestations": "De 75 à 100 %",
+      "Gaz radioactif (potentiel radon)": "Très faible (zone 1)",
+      "Petites villes de Demain": "Oui",
+      "Pinel": "Zone A",
+      "SCOT": "Développement urbain ",
+      "Mixité sociale": "Secteur de diversité sociale. Pour toute opération de plus de 1 000 m² de surface de plancher, 40% de logements locatifs sociaux et 20% d'accession sociale (si dispositif Politique de la ville possible totalité en accession sociale) - Secteur de diversité sociale. Pour toute opération de plus de 1 000 m² de surface de plancher, 35% de logements locatifs sociaux et 20% d'accession sociale (si dispositif Politique de la ville possible totalité en accession sociale)",
+      "Préemption": "Périmètre de droit de préemption urbain",
+      "Sursis à statuer": "Périmètre de sursis à statuer",
+      "Stationnement": "Indice de stationnement. 1 - Indice de stationnement. 4",
+      "Servitudes / prescriptions diverses": "Constructibilité par nouvelle bande d'accès. OUI - Constructibilité par nouvelle bande d'accès. OUI"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "UM16",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Autorisée",
+      "Construction de commerces": "Autorisée",
+      "Construction de locaux artisanaux": "Autorisée",
+      "Construction d'entrepôts": "Interdite",
+      "Emprise au sol maximale autorisée": "40% maximum",
+      "Emprise espaces verts": "25% de surface de pleine terre et 5% de coefficient de végétalisation supplémentaire",
+      "Hauteur au faîtage": "8 mètres",
+      "Hauteur à l'égout": "4 mètres",
+      "Niveaux pour un immeuble collectif": "2",
+      "Précision sur la hauteur": "La hauteur maximale est limitée à R+1 maximum",
+      "Précision sur le(s) dernier(s) étage(s) de la construction": "1) Les toitures terrasses accessibles interdites à moins de 2 mètres d'une limite séparative ; 2) la pente doit être égale à 50%, sauf si la hauteur totale est prescrite au règlement graphique",
+      "Précision sur la hauteur du rez-de-chaussée": "Non réglementée",
+      "Marge de recul": "1) Recul de 4 mètres minimum ou adapté à la séquence de la voie ; 2) les volumes bâtis doivent recréer le rythme de la séquence de voirie, sauf si l'emprise est supérieure à 240 m², dans ce cas il est imposé de fragmenter les volumes",
+      "Profondeur": "Non réglementée",
+      "Retrait par rapport aux limites latérales": "1) Si la hauteur de façade est inférieure ou égale à 4 mètres : aucun retrait, sauf en cas de façade avec baies (dans ce cas un recul de 4 mètres minimum est imposé) ; si la hauteur de façade est supérieure à 4 mètres : retrait minimum de 4 m",
+      "Retrait minimal par rapport au fond de terrain": "1) Si la hauteur de façade est inférieure ou égale à 4 mètres : retrait minimum de 4 m ; si la hauteur de façade est supérieure à 4 mètres : retrait minimum de 6 m",
+      "Retrait entre bâtiments": "Non réglementée",
+      "Stationnement obligatoire": "1) Secteur 1 : 0,2 place par logement ; 2) secteur 2 : 1 place minimum par logement ; 3) secteur 3 : 1 place pour 65 m² de surface de plancher, avec un minimum de 1 place par logement ; 4) secteur 4 : 1 place pour 55 m² de surface de plancher, avec un minimum de 1 place par logement ; 5) secteur 5 : 50 m² de surface de plancher = 1 place, avec un minimum de 1 place par logement",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une station de RER, ou d'un transport en commun en site propre",
+      "Stationnement obligatoire pour les bureaux": "1) Secteur 1 : 100 m² de surface de plancher = 1 place ; 2) secteur 2 : 1 place pour 70 m² de surface de plancher (hors Périmètre de modération) ; 3) secteurs 3 et 4 : 1 place pour 40 m² de surface de plancher (hors Périmètre de modération) ; 4) secteur 5 : 30 m ² de surface de plancher = 1 place",
+      "Stationnement bureau en zone de bonne desserte": "1) Secteur 1 : 100 m² de surface de plancher = 1 place ; 2) secteur 2 : 1 place pour 70 m² de surface de plancher (hors Périmètre de modération) ; 3) secteurs 3 et 4 : 1 place pour 40 m² de surface de plancher (hors Périmètre de modération) ; 4) secteur 5 : 30 m ² de surface de plancher = 1 place"
+    }
+  }
+}

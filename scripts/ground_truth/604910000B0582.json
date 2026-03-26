@@ -1,0 +1,67 @@
+{
+  "ref": "604910000B0582",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Pierrefonds",
+  "zone": "UA",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": 70.0,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 12.0,
+      "type": "faitage",
+      "valeur_egout": null,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": null
+    },
+    "recul_voirie_m": {
+      "valeur": null,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 3,
+      "formule": null,
+      "minimum_m": null
+    },
+    "stationnement_par_logt": {
+      "accession": null,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": null,
+      "pleine_terre_pct": null,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Bâtiments de France (ABF)": "Périmètres de protection des monuments historiques",
+      "Zones de remontées de nappes": "Inondations de cave (fiabilité moyenne)",
+      "Aléa sismique": "Zone de sismicité 1 - Très faible",
+      "Retrait-gonflement des argiles": "La probabilité de rencontrer des matériaux argileux en sous-sol est moyenne",
+      "Termites - Carte départementale des infestations": "Niveau d'infestation inconnu",
+      "Gaz radioactif (potentiel radon)": "Très faible (zone 1)",
+      "Zones de présomption de prescription archéologique": "ZPPA de Pierrefonds",
+      "Pinel": "Zone C",
+      "SCOT": "Développement urbain ",
+      "Paysage à préserver": "Cône de vue. PP - Cône de vue. PP"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "UA",
+      "Interdite": "Dispositions générales : les établissements à usage d'activité industrielle, les bâtiments à usage agricole, les aires de stockage et de dépôts ainsi que les entrepôts, l'aménagement de terrains de camping où de caravaning, ainsi que ceux affectés à l'implantation d'habitations légères de loisirs, ou les garages de caravanes à ciel ouvert, suivant la réglementation en vigueur, Les caravanes où camping-cars isolés hors du terrain où est implantée la construction qui constitue la résidence principale de l'utilisateur, les établissements commerciaux, dans la mesure où leur surface de vente est supérieure à 200 m2, l'ouverture et l'extension de carrières.",
+      "Sous conditions": "Dispositions générales : Sont autorisés sous conditions : Les exhaussements et affouillements des sols indispensables à la réalisation des constructions et installations autorisées, L'extension ou la modification des établissements à usage d'activités existants, dans la mesure où ils satisfont à la réglementation en vigueur les concernant et à condition qu'il n'en résulte pas pour le voisinage une aggravation des dangers ou nuisances, La reconstruction d'un bâtiment régulièrement édifié, détruit en tout ou partie à la suite d'un sinistre dans sa volumétrie d'origine et dans la limite de la surface de plancher préexistante, nonobstant les dispositions des articles 3 à 16, Les dépôts à ciel ouvert de matériel ou de matériaux, ainsi que les constructions provisoires ou mobiles, si ceux-ci sont liés au fonctionnement d'un chantier en cours ou d'un équipement collectif, Les établissements et hébergements touristiques et hôteliers, les établissements commerciaux, dans la mesure où leur surface de vente est inférieure à 200 m2, Les établissements à usage d'activité commerciale où artisanale comportant ou non des Installations classées pour la protection de l'environnement (ICPE), dans la mesure où ils satisfont la législation en vigueur les concernant et à condition qu'ils n'occasionnent pas de nuisances particulières pour le voisinage, Les groupes de garages, dans la mesure où ils sont liés à une opération à usage d'habitation. RÉ 7 À Nm PLAN LOCAL D'URBANISME TITRE I. ZONE U. ARTICLE UA3",
+      "Emprise au sol maximale autorisée": "Dispositions générales : L'emprise au sol des constructions est limitée à 70% du terrain. L'emprise au sol des abris de jardin ne doit pas excéder 9 m2, dans la limite d'un abri par propriété. Dispositions applicables aux constructions et installations nécessaires aux services publics ou d'intérêt collectif (CINASPIC) : l'emprise au sol n'est pas limitée.",
+      "Hauteur au faîtage": "Hauteur maximale des constructions : La hauteur absolue des constructions nouvelles ne peut excéder un maximum de 12 mètres mesurés du terrain naturel existant (c'est-à-dire avant exécution de fouilles ou remblais), jusqu'au faîtage de la toiture. La hauteur à l'égout du toit des abris de jardins ne doit pas excéder 2,20 mètres. Les ouvrages techniques, cheminées, dispositifs de production d'énergie renouvelable (éolienne urbaine, dispositif d'énergie solaire) et autres superstructures ne sont pas pris en compte dans le calcul de la hauteur maximale. Terrains en pente Dans le cas d'un terrain en pente, présentant une forte déclivité, la hauteur sera calculée soit à l'alignement soit au point le plus bas ou au point le plus haut du terrain naturel avant travaux, au droit de la façade sur rue de la construction, à condition : - que l'intégration au site naturel et bâti et au relief soit parfaitement étudiée, - que cette disposition soit justifiée pour des raisons techniques, fonctionnelles où architecturales. RÉ 7 À Nm PLAN LOCAL D'URBANISME TITRE I. ZONE U. ARTICLE UA11 En cas de terrain en pente ascendante, la hauteur au faîtage, mesurée au droit de l'alignement ne saurait excéder 12 mètres augmentés de la différence d'altimétrie entre le terrain naturel avant travaux à l'alignement et le terrain naturel avant travaux au droit de la façade sur rue de la construction. En cas de terrain en pente descendante, la hauteur au faïtage, mesurée au droit de la construction, ne saurait excéder 12 mètres augmentés de la moitié de la différence d'altimétrie entre le terrain naturel avant travaux à l'alignement et le terrain naturel avant travaux au droit de la façade sur rue de la construction.",
+      "Retrait par rapport aux limites latérales": "Généralités Aucune construction ne peut être implantée à moins de 4 m des berges des rus et cours d'eau. Aucune construction ne peut être implantée à moins de 20 mètres de la forêt domaniale.",
+      "Retrait entre bâtiments": "Disposition générale : Une distance d'au moins 3 mètres est exigée entre deux constructions. Dispositions applicables aux immeubles existants : L'aménagement et l'extension des constructions existants qui ne respecteraient pas les règles du présent article sont admis, à condition toutefois que la partie en extension respecte les règles imposées.",
+      "Stationnement obligatoire": "Dispositions générales Il est rappelé que les places de stationnement doivent respecter les prescriptions du décret n°2006-1659 du 21 décembre 2006 relatif aux prescriptions techniques pour l'accèssibilité de la voirie et des espaces publics, pris en application de l'article 46 de la loi du 11 février 2005 et de l'arrêté du 15 janvier 2007 portant application de ce décret. Le stationnement des véhicules correspondant aux besoins des constructions et installations doit être réalisé en dehors des voies publiques et des espaces verts plantés. Sur le terrain même doivent être aménagées des aires suffisantes pour assurer le stationnement et l'évolution des véhicules. RÉ 7 À Nm PLAN LOCAL D'URBANISME TITRE I. ZONE UA -- ARTICLE UA12 (suite), UA13 Chaque emplacement doit être facilement accessible et répondre aux caractéristiques minimum suivantes : longueur : 5 m et largeur : 2,50 m. Le stationnement des véhicules sera de préférence mutualisé. Normes Nombre de places à réaliser pour les nouvelles constructions - Pour les constructions à usage d'habitation, il est exigé 2 places de stationnement par logement -_ Pour les aménagements et changement de destination autre que vers de l'habitation, ces normes ne s'appliquent pas. - Pour les constructions à usage de commerces / artisanat, de bureaux / services, ou d'hébergements, des surfaces suffisantes doivent être prévues pour les visiteurs, le personnel et les livraisons. - Pour les constructions nécessaires au service public ou d'intérêt général, le nombre de places de stationnement à réaliser doit correspondre aux besoins de la construction en tenant compte de sa nature, du taux et du rythme de sa fréquentation, de sa situation géographique au regard des parkings publics existant à proximité, de sa localisation au regard de la desserte en transports en commun. Dispositions particulières pour les constructions existantes - Il n'est pas exigé de place supplémentaire pour les extensions de logements existants, sous réserve que cette extension ait pour conséquence d'augmenter de 30 m2 maximum la surface de plancher existante de la construction à l'entrée en vigueur du PLU et que cette extension n'ait pas pour objet de créer un ou des logements supplémentaires. - Dans les cas où les travaux avec ou sans extension créent de nouveaux logements, le nombre de places à créer est celui calculé en application des normes pour la construction neuve diminué du nombre de places correspondant aux besoins avant travaux considéré comme acquis."
+    }
+  }
+}

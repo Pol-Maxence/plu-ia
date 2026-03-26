@@ -1,0 +1,82 @@
+{
+  "ref": "34157000CV0359",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Mèze",
+  "zone": "U2",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": null,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 12.0,
+      "type": "faitage",
+      "valeur_egout": null,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 4.0
+    },
+    "recul_voirie_m": {
+      "valeur": 3.0,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 3.0,
+      "formule": "H/2",
+      "minimum_m": 3.0
+    },
+    "stationnement_par_logt": {
+      "accession": null,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": 30.0,
+      "pleine_terre_pct": 40.0,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Zones de remontées de nappes": "Inondations de cave (fiabilité moyenne)",
+      "PPR Inondation": "Zones sans aléa déterminé sujettes à recommandations / conditions",
+      "Aléa sismique": "Zone de sismicité 2 - Faible",
+      "Retrait-gonflement des argiles": "La probabilité de rencontrer des matériaux argileux en sous-sol est forte",
+      "Termites - Carte départementale des infestations": "De 25 à 50 %",
+      "Gaz radioactif (potentiel radon)": "Faible (zone 2)",
+      "Loi littoral": "Oui",
+      "Pinel": "Zone B1",
+      "SCOT": " ZACOM ",
+      "Classement sonore des routes": "Largeur maximale de secteur 250 mètres ; Largeur maximale de secteur 100 mètres",
+      "Mixité sociale": "Pour toute opération de plus de 25 logements, 30 % de logements locatifs sociaux",
+      "Zone de bruit": "RD613:26 (En service). 250 mètres - RD613:27 (En service). 100 mètres"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "U2",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Autorisée",
+      "Construction de commerces": "Autorisée",
+      "Construction de locaux artisanaux": "Autorisée",
+      "Emprise espaces verts": "1) Pour les parcelles inférieures à 500 m², 30%, 2) pour les parcelles supérieures à 500 m², 40%",
+      "Hauteur au faîtage": "12 mètres",
+      "Hauteur à l'égout": "Non réglementée",
+      "Niveaux pour un immeuble collectif": "4",
+      "Précision sur la hauteur": "Non réglementée",
+      "Précision sur le(s) dernier(s) étage(s) de la construction": "La pente de toit doit être comprise entre 30 et 32%",
+      "Précision sur la hauteur du rez-de-chaussée": "Non réglementée",
+      "Marge de recul": "Implantation à l'alignement ou selon un recul de 3 mètres minimum",
+      "Profondeur": "Non réglementée",
+      "Retrait par rapport aux limites latérales": "Implantation en limites séparatives ou selon un retrait de 3 mètres minimum, avec un retrait égal à la moitié de la hauteur de la construction (R = H/2)",
+      "Retrait minimal par rapport au fond de terrain": "3 mètres minimum avec un retrait égal à la moitié de la hauteur de la construction (R = H/2)",
+      "Retrait entre bâtiments": "Non réglementée",
+      "Stationnement obligatoire": "1) Pour tout logement de moins de 50 m² de surface de plancher, 1 place, 2) pour tout logement de plus de 50 m² de surface de plancher, 2 places",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une station de RER, ou d'un transport en commun en site propre",
+      "Stationnement obligatoire pour les bureaux": "60% de la surface de plancher",
+      "Stationnement bureau en zone de bonne desserte": "60% de la surface de plancher"
+    }
+  }
+}

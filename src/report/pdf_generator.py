@@ -85,6 +85,28 @@ def _styles() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Helper verbatim
+# ---------------------------------------------------------------------------
+
+def _cell_avec_verbatim(valeur_str: str, champ: str, regles: ReglesUrbanisme) -> object:
+    """
+    Retourne un Paragraph ReportLab avec la valeur + citation PLU en italique gris
+    si un verbatim est disponible pour ce champ, sinon retourne la chaîne brute.
+    """
+    verbatim = regles.verbatims.get(champ) if regles.verbatims else None
+    if not verbatim:
+        return valeur_str
+    citation = verbatim[:130] + ("…" if len(verbatim) > 130 else "")
+    # Échapper les caractères XML spéciaux dans la citation
+    citation = citation.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    s = _styles()
+    return Paragraph(
+        f'{valeur_str}<br/><font size="7" color="#94A3B8"><i>« {citation} »</i></font>',
+        s["body"],
+    )
+
+
+# ---------------------------------------------------------------------------
 # Carte de localisation (tuiles IGN + contour parcelle)
 # ---------------------------------------------------------------------------
 
@@ -578,19 +600,46 @@ def generer_rapport(
     story.append(Paragraph("Règles PLU applicables", s["h2"]))
     regles_rows = [["Paramètre", "Valeur PLU"]]
     regles_rows.append(["Emprise au sol max",
-                        f"{regles.emprise_sol_max_pct} %" if regles.emprise_sol_max_pct else "Non précisée"])
+                        _cell_avec_verbatim(
+                            f"{regles.emprise_sol_max_pct} %" if regles.emprise_sol_max_pct else "Non précisée",
+                            "emprise_sol_max_pct", regles,
+                        )])
     regles_rows.append(["Hauteur maximale",
-                        f"{regles.hauteur_max_m} m" if regles.hauteur_max_m else "Non précisée"])
+                        _cell_avec_verbatim(
+                            f"{regles.hauteur_max_m} m" if regles.hauteur_max_m else "Non précisée",
+                            "hauteur_max_m", regles,
+                        )])
     regles_rows.append(["Surface plancher max",
                         f"{regles.surface_plancher_max_m2} m²" if regles.surface_plancher_max_m2 else "Non précisée"])
+    if regles.recul_voirie_alignement and regles.recul_voirie_m:
+        _recul_voirie_str = f"{regles.recul_voirie_m} m + alignement voisins"
+        _recul_voirie_champ = "recul_voirie_alignement"
+    elif regles.recul_voirie_alignement:
+        _recul_voirie_str = "Alignement sur constructions voisines"
+        _recul_voirie_champ = "recul_voirie_alignement"
+    elif regles.recul_voirie_m:
+        _recul_voirie_str = f"{regles.recul_voirie_m} m"
+        _recul_voirie_champ = "recul_voirie_m"
+    else:
+        _recul_voirie_str = "Non précisé"
+        _recul_voirie_champ = "recul_voirie_m"
     regles_rows.append(["Recul voirie",
-                        f"{regles.recul_voirie_m} m" if regles.recul_voirie_m else "Non précisé"])
+                        _cell_avec_verbatim(_recul_voirie_str, _recul_voirie_champ, regles)])
     regles_rows.append(["Recul limites séparatives",
-                        f"{regles.recul_limites_m} m" if regles.recul_limites_m else "Non précisé"])
+                        _cell_avec_verbatim(
+                            f"{regles.recul_limites_m} m" if regles.recul_limites_m else "Non précisé",
+                            "recul_limites_m", regles,
+                        )])
     regles_rows.append(["Stationnement",
-                        f"{regles.stationnement_par_logt} pl./logt" if regles.stationnement_par_logt else "Non précisé"])
+                        _cell_avec_verbatim(
+                            f"{regles.stationnement_par_logt} pl./logt" if regles.stationnement_par_logt else "Non précisé",
+                            "stationnement_par_logt", regles,
+                        )])
     regles_rows.append(["Espaces verts min",
-                        f"{regles.espace_vert_min_pct:.0f} %" if regles.espace_vert_min_pct else "Non précisé"])
+                        _cell_avec_verbatim(
+                            f"{regles.espace_vert_min_pct:.0f} %" if regles.espace_vert_min_pct else "Non précisé",
+                            "espace_vert_min_pct", regles,
+                        )])
 
     t_regles = Table(regles_rows, colWidths=[7 * cm, 10 * cm])
     t_regles.setStyle(_table_style())

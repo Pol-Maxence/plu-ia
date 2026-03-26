@@ -32,22 +32,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _merger_params(regles: "ReglesUrbanisme", params: dict) -> None:
-    """
-    Surcharge les champs None de regles avec les valeurs fournies par params (UI).
-    Les valeurs PLU extraites ont la priorité ; les params UI comblent uniquement les trous.
-    """
-    if not params:
-        return
-    if regles.recul_voirie_m is None and params.get("recul_voirie_m"):
-        regles.recul_voirie_m = float(params["recul_voirie_m"])
-    if regles.recul_limites_m is None and params.get("recul_limites_m"):
-        regles.recul_limites_m = float(params["recul_limites_m"])
-    if regles.stationnement_par_logt is None and params.get("stationnement_par_logt"):
-        regles.stationnement_par_logt = float(params["stationnement_par_logt"])
-    if regles.espace_vert_min_pct is None and params.get("espace_vert_min_pct"):
-        regles.espace_vert_min_pct = float(params["espace_vert_min_pct"])
-
 
 def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: str = "rapport.pdf", confirm: bool = False, params: dict | None = None) -> None:
     """
@@ -108,8 +92,8 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
 
     # --- Étape 3 : texte du règlement PLU ---
     logger.info("Téléchargement règlement PLU (partition : %s)...", zonage.partition)
-    texte_plu = get_reglement_plu_text(zonage.partition, zonage.nomfic)
-    texte_zone = extraire_section_zone(texte_plu, zonage.zone)
+    texte_brut, toc = get_reglement_plu_text(zonage.partition, zonage.nomfic)
+    texte_zone = extraire_section_zone(texte_brut, zonage.zone, toc)
     logger.info("Texte PLU extrait : %d caractères", len(texte_zone))
 
     # --- Étape 4 : extraction LLM ---
@@ -118,8 +102,6 @@ def run(adresse: str | None = None, ref_cadastrale: str | None = None, output: s
     emprise_log = "non réglementée" if regles.emprise_non_reglementee else (f"{regles.emprise_sol_max_pct}%" if regles.emprise_sol_max_pct else "inconnue")
     logger.info("Règles extraites : emprise=%s, hauteur=%sm", emprise_log, regles.hauteur_max_m)
 
-    # --- Merge params UI dans les règles (comble les trous du PLU) ---
-    _merger_params(regles, params)
 
     # --- Étape 5 : calcul capacitaire ---
     logger.info("Calcul capacitaire...")
@@ -212,16 +194,13 @@ def run_multi(refs: list[str], output: str = "output/rapport.pdf", params: dict 
 
     # --- Étape 3 : texte du règlement PLU ---
     logger.info("Téléchargement règlement PLU (partition : %s)...", zonage.partition)
-    texte_plu = get_reglement_plu_text(zonage.partition, zonage.nomfic)
-    texte_zone = extraire_section_zone(texte_plu, zonage.zone)
+    texte_brut, toc = get_reglement_plu_text(zonage.partition, zonage.nomfic)
+    texte_zone = extraire_section_zone(texte_brut, zonage.zone, toc)
     logger.info("Texte PLU extrait : %d caractères", len(texte_zone))
 
     # --- Étape 4 : extraction LLM ---
     logger.info("Analyse PLU par IA (zone %s)...", zonage.zone)
     regles = extraire_regles_plu(texte_zone, zonage.zone, client)
-
-    # --- Merge params UI dans les règles ---
-    _merger_params(regles, params)
 
     # --- Étape 5 : calcul capacitaire sur parcelle synthétique (surface totale) ---
     from src.api.models import Parcelle

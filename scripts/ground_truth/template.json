@@ -1,0 +1,44 @@
+{
+  "ref": "XXXXXXXXXXXXXX",
+  "source": "KelFoncier",
+  "date": "YYYY-MM",
+  "commune": "",
+  "zone": "",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": null,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": null,
+      "type": null,
+      "valeur_egout": null,
+      "condition": null,
+      "source_oap": false
+    },
+    "recul_voirie_m": {
+      "valeur": null,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": null,
+      "formule": null,
+      "minimum_m": null
+    },
+    "stationnement_par_logt": {
+      "accession": null,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": null,
+      "pleine_terre_pct": null,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": ""
+  }
+}

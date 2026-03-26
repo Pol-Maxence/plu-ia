@@ -56,11 +56,7 @@ defaults = {
     "map_zoom": 6,
     "last_click": None,
     "map_version": 0,  # incrémenté à chaque modification de sélection
-    # Paramètres de calcul éditables
-    "param_stat": 1.0,   # places stationnement par logement
-    "param_ev": 20.0,    # % espaces verts minimum
-    "param_rv": 0.0,     # recul voirie (m)
-    "param_rl": 3.0,     # recul limites séparatives (m)
+    # Paramètres projet éditables (ne viennent pas du PLU)
     "param_t3": 65.0,    # surface T3 (m²)
     "param_t2": 50.0,    # surface T2 (m²)
     "param_rh": 75,      # ratio habitable (%)
@@ -253,35 +249,21 @@ with col_panel:
 
     # --- Paramètres de calcul éditables ---
     with st.expander("Paramètres de calcul", expanded=False):
-        st.caption("Valeurs issues du PLU ou appliquées par défaut. Modifiez avant l'analyse.")
-        _stat = st.number_input("Stationnement (pl./logt)", value=float(st.session_state.param_stat),
-                                step=0.5, min_value=0.0, key="input_stat")
-        _ev = st.number_input("Espaces verts min (%)", value=float(st.session_state.param_ev),
-                              step=5.0, min_value=0.0, max_value=80.0, key="input_ev")
-        _rv = st.number_input("Recul voirie (m)", value=float(st.session_state.param_rv),
-                              step=1.0, min_value=0.0, key="input_rv")
-        _rl = st.number_input("Recul limites (m)", value=float(st.session_state.param_rl),
-                              step=1.0, min_value=0.0, key="input_rl")
+        st.caption(
+            "Reculs, espaces verts et stationnement sont extraits automatiquement du PLU. "
+            "Ajustez ici les paramètres de dimensionnement des logements."
+        )
         _t3 = st.number_input("Surface logt min (m², T3)", value=float(st.session_state.param_t3),
                               step=5.0, min_value=20.0, key="input_t3")
         _t2 = st.number_input("Surface logt max (m², T2)", value=float(st.session_state.param_t2),
                               step=5.0, min_value=15.0, key="input_t2")
         _rh = st.slider("Ratio habitable (%)", value=int(st.session_state.param_rh),
                         min_value=60, max_value=90, key="input_rh")
-        # Sauvegarder dans session_state
-        st.session_state.param_stat = _stat
-        st.session_state.param_ev = _ev
-        st.session_state.param_rv = _rv
-        st.session_state.param_rl = _rl
         st.session_state.param_t3 = _t3
         st.session_state.param_t2 = _t2
         st.session_state.param_rh = _rh
 
     _params_calcul = {
-        "stationnement_par_logt": st.session_state.param_stat,
-        "espace_vert_min_pct": st.session_state.param_ev,
-        "recul_voirie_m": st.session_state.param_rv,
-        "recul_limites_m": st.session_state.param_rl,
         "surface_t3_m2": st.session_state.param_t3,
         "surface_t2_m2": st.session_state.param_t2,
         "ratio_habitable": st.session_state.param_rh / 100,
@@ -341,7 +323,15 @@ with col_panel:
             )
 
         except Exception as e:
-            st.error(f"Erreur : {e}")
+            msg = str(e)
+            if "Aucun zonage PLU trouvé" in msg:
+                st.error(
+                    "Aucun PLU numérisé disponible pour cette parcelle sur le Géoportail "
+                    "de l'Urbanisme. La commune est peut-être en RNU (Règlement National "
+                    "d'Urbanisme) ou son document n'est pas encore publié en ligne."
+                )
+            else:
+                st.error(f"Erreur : {e}")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # COLONNE DROITE — Carte interactive
@@ -407,22 +397,15 @@ with col_carte:
             ),
         ).add_to(m)
 
-    # Affichage + capture du clic, du zoom et du centre courant
+    # Affichage + capture du clic uniquement (pas de zoom/center pour éviter les reruns
+    # déclenchés par le pan/zoom qui recadrent la carte)
     map_data = st_folium(
         m,
         height=580,
         use_container_width=True,
-        returned_objects=["last_clicked", "zoom", "center"],
+        returned_objects=["last_clicked"],
         key=f"carte_plu_{st.session_state.map_version}",
     )
-
-    # Persister zoom et centre pour éviter le reset au prochain rerun
-    if map_data:
-        if map_data.get("zoom"):
-            st.session_state.map_zoom = map_data["zoom"]
-        if map_data.get("center"):
-            c = map_data["center"]
-            st.session_state.map_center = [c["lat"], c["lng"]]
 
     # Traitement du clic carte
     if map_data and map_data.get("last_clicked"):

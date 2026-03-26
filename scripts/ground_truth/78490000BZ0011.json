@@ -1,0 +1,81 @@
+{
+  "ref": "78490000BZ0011",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Plaisir",
+  "zone": "URs2d9",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": null,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 9.0,
+      "type": "faitage",
+      "valeur_egout": 7.0,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 2.5
+    },
+    "recul_voirie_m": {
+      "valeur": 3.0,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 0.0,
+      "formule": "H/2",
+      "minimum_m": 2.5
+    },
+    "stationnement_par_logt": {
+      "accession": 1.0,
+      "social": 1.0,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": 40.0,
+      "pleine_terre_pct": 25.0,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Aléa sismique": "Zone de sismicité 1 - Très faible",
+      "Retrait-gonflement des argiles": "La probabilité de rencontrer des matériaux argileux en sous-sol est forte",
+      "Termites - Carte départementale des infestations": "De 1 à 10 %",
+      "Gaz radioactif (potentiel radon)": "Très faible (zone 1)",
+      "Pinel": "Zone A",
+      "Mixité sociale": "Pour toute opération de plus de 30 logements, 27% de logements locatifs sociaux",
+      "Préemption": "Droit de préemption urbain. DPU",
+      "Zone de bruit": "Secteurs affectés par le bruit lié aux infrastructures de transports terrestres",
+      "Zone de publicité": "ZP1 : secteur principalement d'Habitat. ZP1",
+      "Risques de pollution": "Zone concernée par la lutte contre le saturnisme infantile"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "URs2d9",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Interdite",
+      "Construction de commerces": "Interdite",
+      "Construction de locaux artisanaux": "Interdite",
+      "Construction d'entrepôts": "Interdite",
+      "Emprise espaces verts": "40% de surface d'espaces verts (25% de surface de pleine terre)",
+      "Hauteur au faîtage": "9 mètres",
+      "Hauteur à l'égout": "7 mètres",
+      "Niveaux pour un immeuble collectif": "2.5",
+      "Précision sur la hauteur": "Non réglementée",
+      "Précision sur le(s) dernier(s) étage(s) de la construction": "Non réglementée",
+      "Précision sur la hauteur du rez-de-chaussée": "Non réglementée",
+      "Marge de recul": "3 mètres minimum",
+      "Profondeur": "12 mètres",
+      "Retrait par rapport aux limites latérales": "Implantation en limites séparatives",
+      "Retrait minimal par rapport au fond de terrain": "Implantation en fonds de parcelle possible",
+      "Retrait entre bâtiments": "2,5 mètres, avec une distance égale à la moitié de la hauteur de la construction la plus élevée (D = H/2)",
+      "Stationnement obligatoire": "60 m² de surface de plancher = 1 place, avec un minimum de 1 place par logement (1 place par logement social)",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une station de RER, ou d'un transport en commun en site propre",
+      "Stationnement obligatoire pour les bureaux": "1 place par tranche de 55 m² SDP",
+      "Stationnement bureau en zone de bonne desserte": "1 place par tranche de 55 m² SDP"
+    }
+  }
+}

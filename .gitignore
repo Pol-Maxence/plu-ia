@@ -3,3 +3,5 @@
 __pycache__/
 *.pyc
 *.pdf
+excel/
+tests/fixtures/cache/

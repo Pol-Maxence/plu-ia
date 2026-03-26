@@ -21,7 +21,11 @@ class ReglesUrbanisme:
     usages_interdits: list[str] = field(default_factory=list)
     contraintes: list[str] = field(default_factory=list)   # alertes réglementaires
     recul_voirie_m: Optional[float] = None       # recul par rapport à la voirie
+    recul_voirie_alignement: bool = False        # True si implantation à l'alignement des constructions voisines
     recul_limites_m: Optional[float] = None      # recul par rapport aux limites séparatives
     emprise_non_reglementee: bool = False        # True si le PLU indique explicitement "non réglementée"
     stationnement_par_logt: Optional[float] = None  # places de stationnement par logement (ex: 1.0)
     espace_vert_min_pct: Optional[float] = None     # % minimum du terrain en espace vert
+    hauteur_egout_m: Optional[float] = None         # hauteur à l'égout du toit (si précisée séparément)
+    recul_limites_formule: Optional[str] = None     # formule recul limites ex: "H/2", "H/3"
+    verbatims: dict[str, str] = field(default_factory=dict)  # citations du PLU par champ extrait

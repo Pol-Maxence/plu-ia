@@ -1,0 +1,81 @@
+{
+  "ref": "62628000AI0652",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Noyelles-sous-Lens",
+  "zone": "U",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": null,
+      "non_reglementee": true,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 10.0,
+      "type": "faitage",
+      "valeur_egout": 10.0,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 3.5
+    },
+    "recul_voirie_m": {
+      "valeur": 5.0,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 0.0,
+      "formule": null,
+      "minimum_m": null
+    },
+    "stationnement_par_logt": {
+      "accession": 1.0,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": null,
+      "pleine_terre_pct": null,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Zone": " (66%), UB (34%",
+      "Aléa sismique": "Zone de sismicité 2 - Faible",
+      "TVA à 5,5%": "Quartiers prioritaires de la ville de 2024 ",
+      "< 800m d'une station": "Oui",
+      "Retrait-gonflement des argiles": "La probabilité de rencontrer des matériaux argileux en sous-sol est faible",
+      "Termites - Carte départementale des infestations": "Niveau d'infestation localisée",
+      "Gaz radioactif (potentiel radon)": "Faible (zone 2)",
+      "Zones de présomption de prescription archéologique": "Consultation sans limite de seuil",
+      "Pinel": "Zone B2",
+      "Classement sonore des routes": "Largeur maximale de secteur 250 mètres"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "U",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Autorisée",
+      "Construction de commerces": "Autorisée",
+      "Construction de locaux artisanaux": "Autorisée",
+      "Emprise au sol maximale autorisée": "Non réglementée",
+      "Emprise espaces verts": "Non réglementée",
+      "Hauteur au faîtage": "10 mètres (12 mètres pour les constructions qui ne sont pas à usage d'habitation)",
+      "Hauteur à l'égout": "10 mètres (12 mètres pour les constructions qui ne sont pas à usage d'habitation)",
+      "Niveaux pour un immeuble collectif": "3.5",
+      "Précision sur la hauteur": "La hauteur des constructions peut être plus importante si celle-ci respecte la hauteur maximale du bâtiment voisin.",
+      "Précision sur le(s) dernier(s) étage(s) de la construction": "Non réglementée",
+      "Précision sur la hauteur du rez-de-chaussée": "Non réglementée",
+      "Marge de recul": "Implantation à l'alignement ou selon un recul de 5 mètres minimum - retrait de 20 mètres minimum depuis l'A21 - retrait de 10 mètres minimum depuis le domaine public ferroviaire - en cas de dent creuse, implantation en cotinuité de l'une des constructions voisines",
+      "Profondeur": "Non réglementée",
+      "Retrait par rapport aux limites latérales": "1) Dans une bande de 20 mètres maxium depuis l'emprise publique : implantation sur au moins une des limites séparatives ou selon un retrait de 3 mètres minimum (pouvant être réduit à 1 mètres si la hauteur de construction ne dépasse pas 4 mètres) ; 2) au-delà de la bande de 20 mètres, implantation en limites séparatives à conditions : a) qu'il existe dejà une construction implantée en limite séparative de gabarit similaire ou supérieur à la construction à réaliser, b) si la hauteur du bâtiment à créer implanté en limite séparative ne dépasse par 4 mètres",
+      "Retrait minimal par rapport au fond de terrain": "3 mètres minimum",
+      "Retrait entre bâtiments": "Entre deux bâtiments non contigus doit toujours être ménagée une distance suffisante pour permettre l'entretien facile des marges d'isolement et des bâtiments eux-mêmes, ainsi que le passage et le fonctionnement du matériel de lutte contre l'incendie",
+      "Stationnement obligatoire": "2 places par logement (1 place par logement locatif social - en cas de division d'immeuble : 2 places par lot - pour les projets à destination principale d'habitation créant une voirie nouvelle : 1 place visiteur par tranche de 5 logements en dehors des parcelles)",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une station de RER, ou d'un transport en commun en site propre",
+      "Stationnement obligatoire pour les bureaux": "Selon le besoin des constructions",
+      "Stationnement bureau en zone de bonne desserte": "Selon le besoin des constructions"
+    }
+  }
+}

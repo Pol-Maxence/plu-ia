@@ -1,0 +1,84 @@
+{
+  "ref": "62041000AB0570",
+  "source": "KelFoncier",
+  "date": "",
+  "commune": "Arras",
+  "zone": "UAa+",
+  "champs": {
+    "emprise_sol_max_pct": {
+      "valeur": null,
+      "non_reglementee": false,
+      "condition": null,
+      "source_oap": false
+    },
+    "hauteur_max_m": {
+      "valeur": 19.0,
+      "type": "faitage",
+      "valeur_egout": 16.0,
+      "condition": null,
+      "source_oap": false,
+      "_nb_niveaux_kelfoncier": 5.8
+    },
+    "recul_voirie_m": {
+      "valeur": null,
+      "alignement": false,
+      "formule": null
+    },
+    "recul_limites_m": {
+      "valeur": 35.0,
+      "formule": "H/2",
+      "minimum_m": 35.0
+    },
+    "stationnement_par_logt": {
+      "accession": null,
+      "social": null,
+      "velos": null
+    },
+    "espace_vert_min_pct": {
+      "valeur": 10.0,
+      "pleine_terre_pct": null,
+      "biotope": null
+    },
+    "source_oap_global": false,
+    "notes": "",
+    "_contraintes_kelfoncier": {
+      "Bâtiments de France (ABF)": "Périmètres de protection des monuments historiques ; Sites inscrits",
+      "Aléa sismique": "Zone de sismicité 2 - Faible",
+      "TVA à 5,5%": "Quartiers prioritaires de la ville de 2024 ",
+      "ORT": "Opération de revitalisation du territoire (ORT)",
+      "< 800m d'une station": "Oui",
+      "Termites - Carte départementale des infestations": "Niveau d'infestation localisée",
+      "Gaz radioactif (potentiel radon)": "Très faible (zone 1)",
+      "Zones de présomption de prescription archéologique": "Consultation sans limite de seuil",
+      "Action coeur de ville": "Oui",
+      "Pinel": "Zone B1",
+      "SCOT": " ZACOM ",
+      "Classement sonore des routes": "Largeur maximale de secteur 250 mètres ; Largeur maximale de secteur 100 mètres",
+      "Prescription spéciale architecturale": "Secteurs AVAP - quartier gare - Secteurs AVAP - Centre Historique",
+      "Servitudes / prescriptions diverses": "T5 : servitude aéronautique (zone de dégagement autour des pistes)"
+    },
+    "_plu_kelfoncier_raw": {
+      "Sous-zone principale": "UAa+",
+      "Construction d'habitations": "Autorisée",
+      "Construction de bureaux": "Autorisée",
+      "Construction de commerces": "Autorisée sous réserve de ne pas créer de nuisance pour le voisinage",
+      "Construction de locaux artisanaux": "Autorisée sous réserve de ne pas créer de nuisance pour le voisinage",
+      "Construction d'entrepôts": "Autorisée sous réserve de ne pas créer de nuisance pour le voisinage",
+      "Emprise espaces verts": "10% d'espaces de pleine terre ou toiture végétalisée avec : >50cm de terre = coef 1 ; <50cm de terre = coef 0,5",
+      "Hauteur au faîtage": "19 mètres",
+      "Hauteur à l'égout": "16 mètres",
+      "Niveaux pour un immeuble collectif": "5.8",
+      "Précision sur la hauteur": "Alignement sur la hauteur mitoyenne autorisée ; réhaussement d'un niveau supérieur de 3m maximum possible en cas de RDC commercial",
+      "Précision sur la hauteur du rez-de-chaussée": "Les groupes de garages individuels de plus de deux unités en front à rue sont interdits - La hauteur des RDC ne doit pas être inférieure à 3m",
+      "Marge de recul": "Implantation à l'alignement - et à 10m du fer, 5m des cours d'eau, à 6m du haut des berges de cours d'eau non domaniaux",
+      "Profondeur": "Non réglementé",
+      "Retrait par rapport aux limites latérales": "1) Dans une bande de 35 mètres de profondeur, implantation en limites séparatives, 2) au-delà de 35 mètres, 3 mètres minimum, avec un retrait égal à la moitié de la hauteur de la construction (R = H/2)",
+      "Retrait minimal par rapport au fond de terrain": "1) Dans une bande de 35 mètres de profondeur, implantation en fonds de parcelle, 2) au-delà de 35 mètres, 3 mètres minimum, avec un retrait égal à la moitié de la hauteur de la construction (R = H/2)",
+      "Retrait entre bâtiments": "2 mètres, avec une distance égale au quart de la hauteur de la construction la plus élevée (D = 1/4H)",
+      "Stationnement obligatoire": "1,25 place par logement (1 seule place par logement social - pas de norme de stationnement dans le périmètre citadelle et dans le périmètre formé par les Bd G. Besnier, de la Liberté, R. Schuman, l'Av Michonneau, les Bd Faidherbe, de Strasbourg, Carnot, Vauban, de Gaulle et du Pr. Allendé)",
+      "Stationnement obligatoire si zone tramway": "1 place par logement si la construction est située à moins de 500 mètres d'une gare, ou d'un transport en commun en site propre (0,5 place pour les logements sociaux)",
+      "Stationnement obligatoire pour les bureaux": "Non réglementée",
+      "Stationnement bureau en zone de bonne desserte": "Non réglementée"
+    }
+  }
+}
